@@ -27,6 +27,6 @@ export async function POST(req: NextRequest) {
     if (e instanceof AuthError) {
       return unauthorized();
     }
-    throw e;
+    return err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

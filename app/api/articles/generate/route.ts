@@ -20,6 +20,6 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof QuotaExceededError) return quotaExceeded(e.message);
     if (e instanceof PromptNotFoundError || e instanceof ArticleGroupNotFoundError) return err("NOT_FOUND", e.message, undefined, 404);
-    return ua(e) ?? (() => { throw e; })();
+    return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

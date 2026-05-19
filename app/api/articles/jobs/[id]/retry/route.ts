@@ -23,6 +23,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     enqueueArticleGeneration(job.id);
     return ok({ jobId: job.id, status: job.status }, "任务已重新入队");
   } catch (e) {
-    return ua(e) ?? (() => { throw e; })();
+    return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

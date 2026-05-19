@@ -29,7 +29,7 @@ export async function GET(
     }
     return ok(prompt);
   } catch (e) {
-    return handleAuthError(e) ?? (() => { throw e; })();
+    return handleAuthError(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }
 
@@ -57,7 +57,7 @@ export async function PUT(
     if (e instanceof GroupNotFoundError) {
       return err("NOT_FOUND", e.message, undefined, 404);
     }
-    return handleAuthError(e) ?? (() => { throw e; })();
+    return handleAuthError(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }
 
@@ -74,6 +74,6 @@ export async function DELETE(
     if (e instanceof PromptNotFoundError) {
       return err("NOT_FOUND", e.message, undefined, 404);
     }
-    return handleAuthError(e) ?? (() => { throw e; })();
+    return handleAuthError(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

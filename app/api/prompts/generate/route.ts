@@ -30,6 +30,6 @@ export async function POST(req: NextRequest) {
     if (e instanceof QuotaExceededError) {
       return quotaExceeded(e.message);
     }
-    return handleAuthError(e) ?? (() => { throw e; })();
+    return handleAuthError(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

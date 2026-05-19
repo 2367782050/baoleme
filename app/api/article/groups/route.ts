@@ -10,21 +10,21 @@ function ua(e: unknown) {
 
 export async function GET() {
   try { const s = await requireAuth(); return ok(await listArticleGroups(s.userId)); }
-  catch (e) { return ua(e) ?? (() => { throw e; })(); }
+  catch (e) { return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500); }
 }
 
 export async function POST(req: NextRequest) {
   try { const s = await requireAuth(); const { name, description } = await req.json();
     if (!name || !name.trim()) return err("VALIDATION_ERROR", "分组名称不能为空");
     return ok(await createArticleGroup(s.userId, name.trim(), description), "分组创建成功"); }
-  catch (e) { return ua(e) ?? (() => { throw e; })(); }
+  catch (e) { return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500); }
 }
 
 export async function PUT(req: NextRequest) {
   try { const s = await requireAuth(); const { id, name, description } = await req.json();
     if (!id) return err("VALIDATION_ERROR", "id 不能为空");
     return ok(await updateArticleGroup(id, s.userId, { name, description }), "分组更新成功"); }
-  catch (e) { if (e instanceof ArticleGroupNotFoundError) return err("NOT_FOUND", e.message, undefined, 404); return ua(e) ?? (() => { throw e; })(); }
+  catch (e) { if (e instanceof ArticleGroupNotFoundError) return err("NOT_FOUND", e.message, undefined, 404); return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500); }
 }
 
 export async function DELETE(req: NextRequest) {
@@ -33,5 +33,5 @@ export async function DELETE(req: NextRequest) {
     await deleteArticleGroup(id, s.userId); return ok({}, "分组已删除"); }
   catch (e) { if (e instanceof ArticleGroupNotFoundError) return err("NOT_FOUND", e.message, undefined, 404);
     if (e instanceof ArticleGroupNotEmptyError) return err("GROUP_NOT_EMPTY", e.message, undefined, 409);
-    return ua(e) ?? (() => { throw e; })(); }
+    return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500); }
 }

@@ -127,6 +127,10 @@ Playwright 验收建议使用 `npm run verify:e2e`。该脚本会先清理 3000 
 每次 push 到 `main` 或 Pull Request 时，GitHub Actions 自动运行完整验收流水线。
 配置见 `.github/workflows/ci.yml`，详情见 `docs/13-ci-cd.md`。
 
+### 试用指南
+
+查看 `docs/14-trial-guide.md`。
+
 ### 生产部署
 
 生产环境建议：

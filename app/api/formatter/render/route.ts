@@ -56,6 +56,6 @@ export async function POST(req: NextRequest) {
     const html = renderMarkdown(markdown, config);
     return ok({ html });
   } catch (e) {
-    return ua(e) ?? (() => { throw e; })();
+    return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

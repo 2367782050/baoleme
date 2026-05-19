@@ -29,6 +29,6 @@ export async function GET(
       tokenUsage: job.tokenUsage,
     });
   } catch (e) {
-    return handleAuthError(e) ?? (() => { throw e; })();
+    return handleAuthError(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

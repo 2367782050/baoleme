@@ -25,6 +25,6 @@ export async function POST(req: NextRequest) {
     if (e instanceof InvalidCredentialsError) {
       return err("INVALID_CREDENTIALS", e.message, undefined, 401);
     }
-    throw e;
+    return err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

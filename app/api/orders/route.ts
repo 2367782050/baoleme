@@ -5,7 +5,7 @@ import { ok, err, unauthorized } from "@/lib/utils/api-response";
 function ua(e: unknown) { if (e instanceof Error && (e as { code?: string }).code === "UNAUTHORIZED") return unauthorized(); return null; }
 
 export async function GET() {
-  try { const s = await requireAuth(); return ok(await listOrders(s.userId)); } catch (e) { return ua(e) ?? (() => { throw e; })(); }
+  try { const s = await requireAuth(); return ok(await listOrders(s.userId)); } catch (e) { return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500); }
 }
 export async function POST(req: NextRequest) {
   try { const s = await requireAuth(); const { planId } = await req.json(); if (!planId) return err("VALIDATION_ERROR", "planId 不能为空");

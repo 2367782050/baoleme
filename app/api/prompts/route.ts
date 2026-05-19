@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const prompts = await listPrompts(session.userId, groupId, keyword);
     return ok(prompts);
   } catch (e) {
-    return handleAuthError(e) ?? (() => { throw e; })();
+    return handleAuthError(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }
 
@@ -53,6 +53,6 @@ export async function POST(req: NextRequest) {
     if (e instanceof GroupNotFoundError) {
       return err("NOT_FOUND", e.message, undefined, 404);
     }
-    return handleAuthError(e) ?? (() => { throw e; })();
+    return handleAuthError(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

@@ -3,7 +3,7 @@ import { findUserById } from "@/lib/services/user.service";
 import { findActiveMembership, getPlanCapabilities } from "@/lib/services/membership.service";
 import { getQuotaUsage } from "@/lib/services/quota.service";
 import type { CapabilityKey } from "@/lib/services/quota.service";
-import { ok, unauthorized } from "@/lib/utils/api-response";
+import { ok, err, unauthorized } from "@/lib/utils/api-response";
 
 export async function GET() {
   try {
@@ -54,6 +54,6 @@ export async function GET() {
     if (e instanceof Error && (e as { code?: string }).code === "UNAUTHORIZED") {
       return unauthorized((e as Error).message);
     }
-    throw e;
+    return err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

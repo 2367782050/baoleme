@@ -13,5 +13,5 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const job = await getArticleGenerationJob(id, s.userId);
     if (!job) return err("NOT_FOUND", "任务不存在", undefined, 404);
     return ok({ id: job.id, articleId: job.articleId, status: job.status, errorMessage: job.errorMessage, attempts: job.attempts, tokenUsage: job.tokenUsage, startedAt: job.startedAt, completedAt: job.completedAt });
-  } catch (e) { return ua(e) ?? (() => { throw e; })(); }
+  } catch (e) { return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500); }
 }
