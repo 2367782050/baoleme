@@ -1,0 +1,498 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── 1. Users & Auth ──────────────────────────────────────────────
+
+enum UserRole {
+  user
+  admin
+  super_admin
+}
+
+enum UserStatus {
+  active
+  disabled
+}
+
+model User {
+  id                  String    @id @default(uuid()) @db.Uuid
+  username            String    @unique @db.VarChar(50)
+  email               String    @unique @db.VarChar(255)
+  passwordHash        String    @map("password_hash") @db.Text
+  role                UserRole  @default(user)
+  avatarUrl           String?   @map("avatar_url") @db.Text
+  referralCode        String    @unique @map("referral_code") @db.VarChar(32)
+  referredByUserId    String?   @map("referred_by_user_id") @db.Uuid
+  status              UserStatus @default(active)
+  lastLoginAt         DateTime? @map("last_login_at") @db.Timestamptz()
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  referredBy          User?     @relation("UserReferrals", fields: [referredByUserId], references: [id])
+  referredUsers       User[]    @relation("UserReferrals")
+
+  memberships         UserMembership[]
+  quotaUsage          QuotaUsage[]
+  favorites           Favorite[]
+  promptGroups        PromptGroup[]
+  prompts             Prompt[]
+  promptGenJobs       PromptGenerationJob[]
+  articleGroups       ArticleGroup[]
+  articles            Article[]
+  articleGenJobs      ArticleGenerationJob[]
+  officialAccountGroups OfficialAccountGroup[]
+  officialAccounts    OfficialAccount[]
+  draftPushTasks      DraftPushTask[]
+  orders              Order[]
+  referralCommissionsReceived ReferralCommission[] @relation("Referrer")
+  referralCommissionsFrom    ReferralCommission[] @relation("Referred")
+  withdrawalRequests  WithdrawalRequest[] @relation("WithdrawalRequester")
+  reviewedWithdrawals  WithdrawalRequest[] @relation("WithdrawalReviewer")
+  auditLogs           AuditLog[]
+  usedMembershipCodes MembershipCode[] @relation("UsedMembershipCodes")
+  files               File[]
+
+  @@map("users")
+}
+
+model EmailVerificationCode {
+  id         String    @id @default(uuid()) @db.Uuid
+  email      String    @db.VarChar(255)
+  codeHash   String    @map("code_hash") @db.Text
+  purpose    String    @db.VarChar(30)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz()
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz()
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@map("email_verification_codes")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String   @db.VarChar(100)
+  targetType String?  @map("target_type") @db.VarChar(50)
+  targetId   String?  @map("target_id") @db.Uuid
+  metadata   Json?    @db.JsonB
+  ip         String?  @db.Inet
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
+
+// ─── 2. Membership & Quota ────────────────────────────────────────
+
+model MembershipPlan {
+  id                String  @id @default(uuid()) @db.Uuid
+  code              String  @unique @db.VarChar(50)
+  name              String  @db.VarChar(100)
+  priceCents        Int     @map("price_cents")
+  originalPriceCents Int    @map("original_price_cents")
+  durationDays      Int     @map("duration_days")
+  isActive          Boolean @default(true) @map("is_active")
+  capabilities      Json    @db.JsonB
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  userMemberships   UserMembership[]
+  orders            Order[]
+  membershipCodes   MembershipCode[]
+
+  @@map("membership_plans")
+}
+
+model UserMembership {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  planId    String   @map("plan_id") @db.Uuid
+  startsAt  DateTime @map("starts_at") @db.Timestamptz()
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+  status    String   @db.VarChar(20) // active / expired / cancelled
+  source    String   @db.VarChar(30) // trial / order / code / admin
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User          @relation(fields: [userId], references: [id])
+  plan MembershipPlan @relation(fields: [planId], references: [id])
+
+  @@map("user_memberships")
+}
+
+model QuotaUsage {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  capability String   @db.VarChar(50)
+  periodType String   @map("period_type") @db.VarChar(20) // daily / monthly / lifetime
+  periodKey  String   @map("period_key") @db.VarChar(20) // 2026-05-17 or 2026-05
+  used       Int      @default(0)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, capability, periodType, periodKey])
+  @@map("quota_usage")
+}
+
+// ─── 3. Materials ─────────────────────────────────────────────────
+
+model MaterialDomain {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @db.VarChar(100)
+  parentId  String?  @map("parent_id") @db.Uuid
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  parent   MaterialDomain?  @relation("DomainTree", fields: [parentId], references: [id])
+  children MaterialDomain[] @relation("DomainTree")
+  accounts MaterialAccount[]
+  articles MaterialArticle[]
+
+  @@unique([name, parentId])
+  @@map("material_domains")
+}
+
+model MaterialAccount {
+  id              String   @id @default(uuid()) @db.Uuid
+  platform        String   @db.VarChar(50) // wechat / xiaohongshu / douyin / toutiao
+  name            String   @db.VarChar(255)
+  externalId      String?  @map("external_id") @db.VarChar(255)
+  avatarUrl       String?  @map("avatar_url") @db.Text
+  domainId        String?  @map("domain_id") @db.Uuid
+  avgTopReadCount Int      @default(0) @map("avg_top_read_count")
+  avgReadCount    Int      @default(0) @map("avg_read_count")
+  postCountDaily  Decimal  @default(0) @map("post_count_daily") @db.Decimal
+  likeCountTotal  Int      @default(0) @map("like_count_total")
+  originalIndex   Decimal  @default(0) @map("original_index") @db.Decimal
+  rank            Int      @default(0)
+  sourceProvider  String   @default("seed") @map("source_provider") @db.VarChar(50)
+  snapshotDate    DateTime @map("snapshot_date") @db.Date
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  domain   MaterialDomain?  @relation(fields: [domainId], references: [id])
+  articles MaterialArticle[]
+
+  @@unique([platform, name, sourceProvider])
+  @@map("material_accounts")
+}
+
+model MaterialArticle {
+  id             String   @id @default(uuid()) @db.Uuid
+  platform       String   @db.VarChar(50)
+  accountId      String?  @map("account_id") @db.Uuid
+  domainId       String?  @map("domain_id") @db.Uuid
+  title          String   @db.VarChar(500)
+  sourceUrl      String?  @map("source_url") @db.Text
+  summary        String?  @db.Text
+  contentExcerpt String?  @map("content_excerpt") @db.Text
+  coverUrl       String?  @map("cover_url") @db.Text
+  readCount      Int      @default(0) @map("read_count")
+  likeCount      Int      @default(0) @map("like_count")
+  commentCount   Int      @default(0) @map("comment_count")
+  publishedAt    DateTime? @map("published_at") @db.Timestamptz()
+  sourceProvider String   @default("seed") @map("source_provider") @db.VarChar(50)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  account MaterialAccount? @relation(fields: [accountId], references: [id])
+  domain  MaterialDomain?  @relation(fields: [domainId], references: [id])
+
+  @@map("material_articles")
+}
+
+model HotTopic {
+  id         String   @id @default(uuid()) @db.Uuid
+  platform   String   @db.VarChar(50)
+  title      String   @db.VarChar(500)
+  url        String?  @db.Text
+  rank       Int      @default(0)
+  heatScore  Decimal  @default(0) @map("heat_score") @db.Decimal
+  snapshotAt DateTime @map("snapshot_at") @db.Timestamptz()
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@unique([platform, title, url])
+  @@map("hot_topics")
+}
+
+model Favorite {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  targetType String   @map("target_type") @db.VarChar(30) // account / article / topic / prompt
+  targetId   String   @map("target_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("favorites")
+}
+
+// ─── 4. Prompts ───────────────────────────────────────────────────
+
+model PromptGroup {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user        User      @relation(fields: [userId], references: [id])
+  prompts     Prompt[]
+  genJobs     PromptGenerationJob[]
+
+  @@map("prompt_groups")
+}
+
+model Prompt {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  groupId    String?  @map("group_id") @db.Uuid
+  name       String   @db.VarChar(200)
+  content    String   @db.Text
+  sourceType String   @default("manual") @map("source_type") @db.VarChar(30) // manual / generated
+  config     Json?    @db.JsonB
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user  User        @relation(fields: [userId], references: [id])
+  group PromptGroup? @relation(fields: [groupId], references: [id])
+  articles Article[]
+  genJobAsOutput PromptGenerationJob[] @relation("OutputPrompt")
+
+  @@map("prompts")
+}
+
+model PromptGenerationJob {
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @map("user_id") @db.Uuid
+  groupId        String?  @map("group_id") @db.Uuid
+  status         String   @default("pending") @db.VarChar(20) // pending / running / completed / failed
+  input          Json     @db.JsonB
+  outputPromptId String?  @map("output_prompt_id") @db.Uuid
+  errorMessage   String?  @map("error_message") @db.Text
+  tokenUsage     Json?    @map("token_usage") @db.JsonB
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user         User        @relation(fields: [userId], references: [id])
+  group        PromptGroup? @relation(fields: [groupId], references: [id])
+  outputPrompt Prompt?     @relation("OutputPrompt", fields: [outputPromptId], references: [id])
+
+  @@map("prompt_generation_jobs")
+}
+
+// ─── 5. Articles ──────────────────────────────────────────────────
+
+model ArticleGroup {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user     User      @relation(fields: [userId], references: [id])
+  articles Article[]
+
+  @@map("article_groups")
+}
+
+model Article {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  groupId          String?  @map("group_id") @db.Uuid
+  promptId         String?  @map("prompt_id") @db.Uuid
+  title            String?  @db.VarChar(500)
+  markdownContent  String?  @map("markdown_content") @db.Text
+  htmlContent      String?  @map("html_content") @db.Text
+  coverUrl         String?  @map("cover_url") @db.Text
+  status           String   @default("draft") @db.VarChar(20) // draft / generating / completed / failed
+  pushStatus       String   @default("not_pushed") @map("push_status") @db.VarChar(20)
+  generationConfig Json?    @map("generation_config") @db.JsonB
+  formatterConfig  Json?    @map("formatter_config") @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user         User         @relation(fields: [userId], references: [id])
+  group        ArticleGroup? @relation(fields: [groupId], references: [id])
+  prompt       Prompt?       @relation(fields: [promptId], references: [id])
+  genJobs      ArticleGenerationJob[]
+  draftPushTasks DraftPushTask[]
+
+  @@map("articles")
+}
+
+model ArticleGenerationJob {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  articleId     String    @map("article_id") @db.Uuid
+  status        String    @default("pending") @db.VarChar(20) // pending / running / completed / failed / cancelled
+  input         Json      @db.JsonB
+  errorMessage  String?   @map("error_message") @db.Text
+  attempts      Int       @default(0)
+  startedAt     DateTime? @map("started_at") @db.Timestamptz()
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz()
+  tokenUsage    Json?     @map("token_usage") @db.JsonB
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user    User    @relation(fields: [userId], references: [id])
+  article Article @relation(fields: [articleId], references: [id])
+
+  @@map("article_generation_jobs")
+}
+
+// ─── 6. Official Accounts ─────────────────────────────────────────
+
+model OfficialAccountGroup {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user     User               @relation(fields: [userId], references: [id])
+  accounts OfficialAccount[]
+
+  @@map("official_account_groups")
+}
+
+model OfficialAccount {
+  id          String   @id @default(uuid()) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  groupId     String?  @map("group_id") @db.Uuid
+  appid       String   @db.VarChar(100)
+  name        String   @db.VarChar(255)
+  avatarUrl   String?  @map("avatar_url") @db.Text
+  status      String   @default("mock_authorized") @db.VarChar(30) // mock_authorized / authorized / expired / revoked
+  authPayload Json?    @map("auth_payload") @db.JsonB
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user           User                @relation(fields: [userId], references: [id])
+  group          OfficialAccountGroup? @relation(fields: [groupId], references: [id])
+  draftPushTasks DraftPushTask[]
+
+  @@map("official_accounts")
+}
+
+model DraftPushTask {
+  id                String   @id @default(uuid()) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  articleId         String   @map("article_id") @db.Uuid
+  officialAccountId String   @map("official_account_id") @db.Uuid
+  status            String   @default("pending") @db.VarChar(20) // pending / running / completed / failed
+  externalDraftId   String?  @map("external_draft_id") @db.VarChar(255)
+  errorMessage      String?  @map("error_message") @db.Text
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user            User            @relation(fields: [userId], references: [id])
+  article         Article         @relation(fields: [articleId], references: [id])
+  officialAccount OfficialAccount  @relation(fields: [officialAccountId], references: [id])
+
+  @@map("draft_push_tasks")
+}
+
+// ─── 7. Billing & Referral ────────────────────────────────────────
+
+model Order {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  planId          String    @map("plan_id") @db.Uuid
+  orderNo         String    @unique @map("order_no") @db.VarChar(64)
+  amountCents     Int       @map("amount_cents")
+  status          String    @default("pending") @db.VarChar(20) // pending / paid / cancelled / refunded
+  paymentProvider String    @default("mock") @map("payment_provider") @db.VarChar(30)
+  paidAt          DateTime? @map("paid_at") @db.Timestamptz()
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user       User           @relation(fields: [userId], references: [id])
+  plan       MembershipPlan @relation(fields: [planId], references: [id])
+  commissions ReferralCommission[]
+
+  @@map("orders")
+}
+
+model MembershipCode {
+  id            String    @id @default(uuid()) @db.Uuid
+  codeHash      String    @map("code_hash") @db.Text
+  planId        String    @map("plan_id") @db.Uuid
+  status        String    @default("unused") @db.VarChar(20) // unused / used / disabled
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz()
+  usedByUserId  String?   @map("used_by_user_id") @db.Uuid
+  usedAt        DateTime? @map("used_at") @db.Timestamptz()
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  plan     MembershipPlan @relation(fields: [planId], references: [id])
+  usedBy   User?          @relation("UsedMembershipCodes", fields: [usedByUserId], references: [id])
+
+  @@map("membership_codes")
+}
+
+model ReferralCommission {
+  id               String   @id @default(uuid()) @db.Uuid
+  referrerUserId   String   @map("referrer_user_id") @db.Uuid
+  referredUserId   String   @map("referred_user_id") @db.Uuid
+  orderId          String   @map("order_id") @db.Uuid
+  amountCents      Int      @map("amount_cents")
+  rate             Decimal  @db.Decimal
+  status           String   @default("pending") @db.VarChar(20) // pending / available / withdrawn / cancelled
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  referrer User  @relation("Referrer", fields: [referrerUserId], references: [id])
+  referred User  @relation("Referred", fields: [referredUserId], references: [id])
+  order    Order @relation(fields: [orderId], references: [id])
+
+  @@map("referral_commissions")
+}
+
+model WithdrawalRequest {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  amountCents      Int       @map("amount_cents")
+  feeCents         Int       @default(0) @map("fee_cents")
+  alipayName       String    @map("alipay_name") @db.VarChar(100)
+  alipayAccount    String    @map("alipay_account") @db.VarChar(255)
+  status           String    @default("pending") @db.VarChar(20) // pending / approved / rejected / paid
+  reviewedByUserId String?   @map("reviewed_by_user_id") @db.Uuid
+  reviewedAt       DateTime? @map("reviewed_at") @db.Timestamptz()
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user     User  @relation("WithdrawalRequester", fields: [userId], references: [id])
+  reviewer User? @relation("WithdrawalReviewer", fields: [reviewedByUserId], references: [id])
+
+  @@map("withdrawal_requests")
+}
+
+// ─── 8. Files ─────────────────────────────────────────────────────
+
+model File {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  bucket    String   @db.VarChar(100)
+  objectKey String   @map("object_key") @db.Text
+  publicUrl String   @map("public_url") @db.Text
+  mimeType  String   @map("mime_type") @db.VarChar(100)
+  sizeBytes BigInt   @map("size_bytes")
+  purpose   String   @db.VarChar(50) // cover / image / import
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("files")
+}
