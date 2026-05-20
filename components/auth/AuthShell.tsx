@@ -20,6 +20,7 @@ export function AuthShell({
   const [direction, setDirection] = useState<Direction>(initialMode === "register" ? "forward" : "back");
   const [checking, setChecking] = useState(true);
   const [leaving, setLeaving] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -32,10 +33,15 @@ export function AuthShell({
   }, []);
 
   function switchTo(target: AuthMode) {
-    if (target === mode || leaving) return;
-    setDirection(target === "register" ? "forward" : "back");
-    setMode(target);
-    router.replace(target === "login" ? "/login" : "/register", { scroll: false });
+    if (target === mode || leaving || switching) return;
+    setSwitching(true);
+    // Brief feedback delay before actually switching
+    setTimeout(() => {
+      setDirection(target === "register" ? "forward" : "back");
+      setMode(target);
+      router.replace(target === "login" ? "/login" : "/register", { scroll: false });
+      setSwitching(false);
+    }, 140);
   }
 
   function exitToDashboard() {
@@ -70,7 +76,7 @@ export function AuthShell({
             {loginForm(exitToDashboard)}
             <p className="mt-6 text-center text-sm text-zinc-500">
               还没有账号？{" "}
-              <button type="button" onClick={() => switchTo("register")} className="font-medium text-teal-600 hover:underline">
+              <button type="button" onClick={() => switchTo("register")} className={`auth-switch-link ${switching ? "is-switching" : ""}`}>
                 去注册
               </button>
             </p>
@@ -86,7 +92,7 @@ export function AuthShell({
             {registerForm(exitToDashboard)}
             <p className="mt-6 text-center text-sm text-zinc-500">
               已有账号？{" "}
-              <button type="button" onClick={() => switchTo("login")} className="font-medium text-teal-600 hover:underline">
+              <button type="button" onClick={() => switchTo("login")} className={`auth-switch-link ${switching ? "is-switching" : ""}`}>
                 去登录
               </button>
             </p>

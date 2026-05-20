@@ -607,6 +607,54 @@ button:hover .tool-icon-motion,
   animation: drawerExpandIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ── Auth switch link ──────────────────────────────────────── */
+
+.auth-switch-link {
+  position: relative;
+  display: inline-block;
+  font-weight: 500;
+  color: #0d9488;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.2s ease;
+  text-decoration: none;
+  background: none; border: none; padding: 0;
+  font-size: inherit; font-family: inherit;
+}
+.auth-switch-link::after {
+  content: "";
+  position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 1.5px;
+  background: linear-gradient(90deg, #2dd4bf, #38bdf8);
+  transform: scaleX(0.3);
+  transform-origin: left;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.auth-switch-link:hover {
+  transform: translateY(-1px);
+  color: #0f766e;
+}
+.auth-switch-link:hover::after {
+  transform: scaleX(1);
+}
+.auth-switch-link:active {
+  transform: scale(0.96);
+}
+.auth-switch-link.is-switching {
+  pointer-events: none;
+  color: #2dd4bf;
+}
+.auth-switch-link.is-switching::after {
+  transform: scaleX(1);
+  background: linear-gradient(90deg, #38bdf8, #2dd4bf, #38bdf8);
+  background-size: 200% 100%;
+  animation: switchLinkFlash 0.25s ease-out;
+}
+@keyframes switchLinkFlash {
+  0%   { background-position: 0% 0; opacity: 1; }
+  100% { background-position: 200% 0; opacity: 0.4; }
+}
+
 @media (max-width: 768px) {
   .auth-center-page {
     min-height: calc(100vh - 84px);
@@ -660,5 +708,9 @@ button:hover .tool-icon-motion,
   .auth-center-page.register-mode .auth-form-card[data-mode="register"] {
     transform: none;
   }
+  .auth-switch-link, .auth-switch-link::after {
+    transition: none; animation: none;
+  }
+  .auth-switch-link:hover { transform: none; }
 }
 
