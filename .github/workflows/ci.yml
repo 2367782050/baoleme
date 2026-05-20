@@ -73,10 +73,16 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Console check (tsx)
-        run: npx tsx scripts/console-check.ts
+        run: |
+          npx next dev --port 3000 &
+          sleep 5
+          npx tsx scripts/console-check.ts
 
       - name: Playwright E2E
         run: npm run verify:e2e
 
       - name: Screenshots
-        run: npx tsx scripts/screenshots.ts
+        run: |
+          npx next dev --port 3000 &
+          sleep 5
+          npx tsx scripts/screenshots.ts
