@@ -46,13 +46,7 @@ export async function executeGenerationJob(jobId: string): Promise<void> {
   const job = await prisma.promptGenerationJob.findUnique({
     where: { id: jobId },
   });
-  if (!job || job.status !== "pending") return;
-
-  // Mark running
-  await prisma.promptGenerationJob.update({
-    where: { id: jobId },
-    data: { status: "running" },
-  });
+  if (!job || job.status !== "running") return;
 
   try {
     const provider = await createConfiguredProvider();
@@ -86,6 +80,7 @@ export async function executeGenerationJob(jobId: string): Promise<void> {
       data: {
         status: "completed",
         outputPromptId: prompt.id,
+        completedAt: new Date(),
         tokenUsage: usage as Prisma.InputJsonValue,
       },
     });
@@ -99,6 +94,7 @@ export async function executeGenerationJob(jobId: string): Promise<void> {
       data: {
         status: "failed",
         errorMessage,
+        completedAt: new Date(),
       },
     });
 

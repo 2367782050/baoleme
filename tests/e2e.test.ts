@@ -109,6 +109,7 @@ describe("E2E: Article generation → Format → Save config", () => {
     articleId = article.id;
     expect(job.status).toBe("pending");
 
+    await prisma.articleGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
     await executeArticleGenerationJob(job.id);
     const a = await prisma.article.findUnique({ where: { id: articleId } });
     expect(a!.status).toBe("completed");

@@ -244,6 +244,7 @@ describe("Prompt generation jobs", () => {
       userNotes: "",
     });
 
+    await prisma.promptGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
     await executeGenerationJob(job.id);
 
     const updated = await getGenerationJob(job.id, userId);
@@ -276,7 +277,8 @@ describe("Prompt generation jobs", () => {
     });
 
     try {
-      await executeGenerationJob(job.id);
+      await prisma.promptGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
+    await executeGenerationJob(job.id);
     } catch {
       // expected
     }
@@ -357,6 +359,7 @@ describe("Prompt generate quota", () => {
       userNotes: "",
     });
 
+    await prisma.promptGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
     await executeGenerationJob(job.id);
 
     const usage = await prisma.quotaUsage.findFirst({

@@ -66,7 +66,7 @@ export async function getArticleGenerationJob(jobId: string, userId: string): Pr
 export async function executeArticleGenerationJob(jobId: string): Promise<void> {
   const job = await prisma.articleGenerationJob.findUnique({ where: { id: jobId } });
   if (!job) return;
-  if (job.status !== "pending") return;
+  if (job.status !== "running") return;
 
   // Defensive: verify article exists and belongs to same user
   const article = await prisma.article.findUnique({ where: { id: job.articleId } });
@@ -104,7 +104,6 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
     return;
   }
 
-  await prisma.articleGenerationJob.update({ where: { id: jobId }, data: { status: "running", startedAt: new Date() } });
   await prisma.article.update({ where: { id: article.id }, data: { status: "generating" } });
 
   let totalTokens = 0;
@@ -195,7 +194,7 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
     const errorMessage = e instanceof Error ? e.message : "未知错误";
     await prisma.articleGenerationJob.update({
       where: { id: jobId },
-      data: { status: "failed", errorMessage },
+      data: { status: "failed", errorMessage, completedAt: new Date() },
     });
     await prisma.article.update({
       where: { id: article.id },
