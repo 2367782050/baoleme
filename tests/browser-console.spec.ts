@@ -1,8 +1,14 @@
 /**
  * Phase 15D: Console error test — no hiding real errors.
- * Only acceptable: hydration dev warnings, net::ERR_ABORTED,
- * and 401 on /api/auth/me from Header server component.
- * Everything else — any 500, any non-/api/auth/me 401, any 403, any 404 — must fail.
+ *
+ * Filtering rules:
+ * - ALLOW: hydration dev warnings, net::ERR_ABORTED
+ * - ALLOW: console.error "401 (Unauthorized)" (untraceable to URL; response-level
+ *   filter below catches real issues)
+ * - ALLOW on response: 401 on /api/auth/me (Header server component)
+ * - FAIL: any HTTP 500, 403, 404, non-/api/auth/me 401 on response
+ * - FAIL: any pageerror (uncaught exception in JS)
+ * - FAIL: any requestfailed (other than ERR_ABORTED)
  */
 import { test, expect } from "@playwright/test";
 
@@ -11,8 +17,22 @@ const BASE = "http://localhost:3000";
 test.describe("Console errors across all pages", () => {
   test("no console errors on unauthenticated pages", async ({ page }) => {
     const errors: string[] = [];
-    page.on("console", (msg) => { if (msg.type() === "error") errors.push(msg.text()); });
+
+    page.on("console", (msg) => {
+      if (msg.type() !== "error") return;
+      const text = msg.text();
+      // Generic "401 (Unauthorized)" console error — cannot tell which URL.
+      // The response listener below catches specific non-/api/auth/me 401s.
+      if (text.includes("401") && text.includes("Unauthorized")) return;
+      errors.push(text);
+    });
     page.on("pageerror", (err) => errors.push(err.message));
+    page.on("response", (resp) => {
+      if (resp.status() === 401 && resp.url().includes("/api/auth/me")) return;
+      if (resp.status() >= 400 && resp.status() !== 307) {
+        errors.push(`HTTP ${resp.status()}: ${resp.url()}`);
+      }
+    });
 
     for (const path of ["/", "/login", "/register"]) {
       await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
@@ -23,17 +43,20 @@ test.describe("Console errors across all pages", () => {
       !e.includes("hydration") &&
       !e.includes("net::ERR_ABORTED")
     );
-    // Only acceptable: 401 on /api/auth/me from Header server component
-    const unacceptable = relevant.filter(e => {
-      if (e.includes("401") && e.includes("/api/auth/me")) return false;
-      return true;
-    });
-    expect(unacceptable).toHaveLength(0);
+    expect(relevant).toHaveLength(0);
   });
 
   test("no console errors on authenticated pages + interactions", async ({ page }) => {
     const errors: string[] = [];
-    page.on("console", (msg) => { if (msg.type() === "error") errors.push(msg.text()); });
+
+    page.on("console", (msg) => {
+      if (msg.type() !== "error") return;
+      const text = msg.text();
+      // Generic "401 (Unauthorized)" console error — cannot tell which URL.
+      // The response listener below catches specific non-/api/auth/me 401s.
+      if (text.includes("401") && text.includes("Unauthorized")) return;
+      errors.push(text);
+    });
     page.on("pageerror", (err) => errors.push(err.message));
     page.on("requestfailed", (req) => {
       const f = req.failure();
@@ -42,7 +65,6 @@ test.describe("Console errors across all pages", () => {
       }
     });
     page.on("response", (resp) => {
-      // ONLY ignore 401 on /api/auth/me — Header server component's expected behavior
       if (resp.status() === 401 && resp.url().includes("/api/auth/me")) return;
       if (resp.status() >= 400 && resp.status() !== 307) {
         errors.push(`HTTP ${resp.status()}: ${resp.url()}`);
@@ -89,12 +111,6 @@ test.describe("Console errors across all pages", () => {
       !e.includes("hydration") &&
       !e.includes("net::ERR_ABORTED")
     );
-    // ONLY acceptable: 401 on /api/auth/me from Header server component
-    // Everything else — 500, 403, 404, non-/api/auth/me 401 — must fail.
-    const unacceptable = relevant.filter(e => {
-      if (e.includes("401") && e.includes("/api/auth/me")) return false;
-      return true;
-    });
-    expect(unacceptable).toHaveLength(0);
+    expect(relevant).toHaveLength(0);
   });
 });
