@@ -41,7 +41,7 @@ export function AuthShell({
       setMode(target);
       router.replace(target === "login" ? "/login" : "/register", { scroll: false });
       setSwitching(false);
-    }, 140);
+    }, 280);
   }
 
   function exitToDashboard() {
