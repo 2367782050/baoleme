@@ -17,7 +17,7 @@ async function loginAs(page: Page, account: string, password: string) {
   await page.goto(`${BASE}/login`);
   await page.fill("#account", account);
   await page.fill("#password", password);
-  await page.click("button[type=submit]");
+  await page.getByRole("button", { name: "登录", exact: true }).click();
   await page.waitForURL("**/dashboard", { timeout: 10000 });
   await expect(page.getByText(`你好，${account}`)).toBeVisible({ timeout: 5000 });
   await expect.poll(async () => {

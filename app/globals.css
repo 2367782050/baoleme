@@ -496,6 +496,117 @@ button:hover .tool-icon-motion,
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Phase 18B — Auth Shell + Spatial Transitions
+   ═══════════════════════════════════════════════════════════════ */
+
+.auth-shell {
+  display: flex; min-height: 100vh; overflow: hidden;
+}
+.auth-brand {
+  flex: 1; display: flex; flex-direction: column; justify-content: center;
+  padding: 3rem; position: relative; overflow: hidden;
+}
+.auth-brand::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 30% 40%, rgba(125,211,252,0.32), transparent 60%),
+    radial-gradient(ellipse 60% 80% at 70% 70%, rgba(167,243,208,0.22), transparent 60%);
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.auth-shell.login-mode .auth-brand::before { transform: translateX(-4%); }
+.auth-shell.register-mode .auth-brand::before { transform: translateX(4%); }
+.auth-mini-cards {
+  display: flex; flex-direction: column; gap: 0.75rem; margin-top: 2rem;
+  position: relative; z-index: 1;
+}
+.auth-mini-card {
+  display: flex; align-items: center; gap: 0.75rem;
+  background: rgba(255,255,255,0.52); backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.60);
+  border-radius: 16px; padding: 0.75rem 1rem;
+  font-size: 0.875rem; color: #334155;
+  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease;
+}
+.auth-mini-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15,23,42,0.06);
+}
+.auth-form-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 2rem; position: relative;
+}
+.auth-form-card {
+  width: 100%; max-width: 420px;
+  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.35s ease;
+  position: relative; z-index: 1;
+}
+.auth-form-card.forward {
+  transform: translateX(0) scale(1); opacity: 1;
+}
+.auth-form-card.back {
+  transform: translateX(40px) scale(0.96); opacity: 0;
+  pointer-events: none; position: absolute; top: 0; left: 0; right: 0;
+}
+.auth-shell.register-mode .auth-form-card[data-mode="login"] {
+  transform: translateX(-40px) scale(0.96); opacity: 0;
+  pointer-events: none; position: absolute; top: 0; left: 0; right: 0;
+}
+.auth-shell.register-mode .auth-form-card[data-mode="register"] {
+  transform: translateX(0) scale(1); opacity: 1;
+  pointer-events: auto; position: relative;
+}
+.auth-error, .auth-status {
+  animation: drawerExpandIn 0.25s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@media (max-width: 768px) {
+  .auth-shell { flex-direction: column; }
+  .auth-brand { flex: none; padding: 2rem 1.5rem 0; min-height: auto; }
+  .auth-brand::before { display: none; }
+  .auth-mini-cards { display: none; }
+  .auth-form-area { flex: 1; padding: 1.5rem; }
+  .auth-form-card.forward, .auth-form-card.back,
+  .auth-shell.register-mode .auth-form-card[data-mode="login"],
+  .auth-shell.register-mode .auth-form-card[data-mode="register"] {
+    transform: none; opacity: 1; pointer-events: auto;
+    position: relative; max-width: 100%;
+  }
+}
+
+/* ── Reduced motion — respect user preference ─────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .depth-page, .depth-stage > *, .depth-tab-content, .depth-drawer,
+  .depth-modal-backdrop, .depth-modal, .modal-backdrop, .modal-float,
+  .motion-generating, .motion-task::after, .motion-success,
+  .auth-brand, .auth-brand::before, .auth-form-card, .auth-mini-card,
+  .auth-error, .auth-status {
+    animation: none;
+    opacity: 1;
+  }
+  .glass-card, .glass-panel, .glass-tile,
+  .glass-btn-primary, .glass-btn-secondary, .glass-btn-danger,
+  .glass-pill, .glass-segmented button,
+  .tool-icon-motion, .glass-sidebar-item {
+    transition: none;
+  }
+  .glass-card:hover, .glass-panel:hover, .glass-tile:hover,
+  .glass-btn-primary:hover, .glass-btn-secondary:hover,
+  .glass-pill:hover, .glass-segmented button:hover,
+  a:hover .tool-icon-motion, button:hover .tool-icon-motion,
+  .group:hover .tool-icon-motion {
+    transform: none;
+  }
+  .auth-form-card.forward, .auth-form-card.back,
+  .auth-shell.register-mode .auth-form-card[data-mode="login"],
+  .auth-shell.register-mode .auth-form-card[data-mode="register"] {
+    transform: none; opacity: 1; pointer-events: auto; position: relative;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
    Reduced motion — respect user preference
    ═══════════════════════════════════════════════════════════════ */
 

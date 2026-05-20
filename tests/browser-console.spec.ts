@@ -75,7 +75,7 @@ test.describe("Console errors across all pages", () => {
     await page.goto(`${BASE}/login`);
     await page.fill("#account", "admin");
     await page.fill("#password", "admin123");
-    await page.click("button[type=submit]");
+    await page.getByRole("button", { name: "登录", exact: true }).click();
     await page.waitForURL("**/dashboard", { timeout: 10000 });
 
     const authenticatedPages = [

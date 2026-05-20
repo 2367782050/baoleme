@@ -12,7 +12,7 @@ test.describe("Public pages", () => {
     await page.goto(`${BASE}/login`);
     await expect(page.getByRole("heading", { name: "登录" })).toBeVisible();
     await expect(page.locator("input#account")).toBeVisible();
-    await expect(page.locator("button[type=submit]")).toBeVisible();
+    await expect(page.getByRole("button", { name: "登录", exact: true })).toBeVisible();
   });
   test("/register shows register form", async ({ page }) => {
     await page.goto(`${BASE}/register`);
@@ -26,7 +26,7 @@ test.describe("Auth flow", () => {
     await page.goto(`${BASE}/login`);
     await page.fill("input#account", "admin");
     await page.fill("input#password", "admin123");
-    await page.click("button[type=submit]");
+    await page.getByRole("button", { name: "登录", exact: true }).click();
     await page.waitForURL("**/dashboard", { timeout: 10000 });
     await expect(page.getByText("你好，admin")).toBeVisible({ timeout: 5000 });
   });
@@ -39,7 +39,7 @@ test.describe("Auth flow", () => {
     await page.goto(`${BASE}/login`);
     await page.fill("input#account", "admin");
     await page.fill("input#password", "wrongpassword");
-    await page.click("button[type=submit]");
+    await page.getByRole("button", { name: "登录", exact: true }).click();
     await expect(page.locator(".text-red-500, .text-red-600").first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -49,7 +49,7 @@ test.describe("Dashboard pages (as admin)", () => {
     await page.goto(`${BASE}/login`);
     await page.fill("input#account", "admin");
     await page.fill("input#password", "admin123");
-    await page.click("button[type=submit]");
+    await page.getByRole("button", { name: "登录", exact: true }).click();
     await page.waitForURL("**/dashboard", { timeout: 10000 });
   });
 
