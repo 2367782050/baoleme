@@ -1,14 +1,10 @@
 /**
- * Phase 20B: Database-persistent AI task worker — reliability hardened.
+ * Phase 20C: Database-persistent AI task worker — maxAttempts-aware.
  *
- * - Atomic claim: updateMany where { id, status: "pending", attempts < maxAttempts }
- * - Only claims one job at a time per poll cycle
- * - Stale running recovery: running jobs older than AI_WORKER_STALE_MS
- *   are reset to pending (if under maxAttempts) or marked failed
- * - Job service writes startedAt, completedAt, attempts increment
- *
- * Usage:
- *   npm run worker:ai
+ * - Atomic claim: queries eligible candidates, checks attempts < maxAttempts in JS,
+ *   then updateMany to atomically claim.
+ * - Stale running recovery uses maxAttempts per job (not hardcoded 3).
+ * - Only claims one job at a time per poll cycle.
  */
 
 import "dotenv/config";
@@ -18,7 +14,7 @@ import { executeGenerationJob } from "../lib/services/prompt-generation.service.
 import { executeArticleGenerationJob } from "../lib/services/article-generation.service.js";
 
 const POLL_MS = parseInt(process.env.AI_WORKER_POLL_MS ?? "2000", 10);
-const STALE_MS = parseInt(process.env.AI_WORKER_STALE_MS ?? "600000", 10); // 10 min
+const STALE_MS = parseInt(process.env.AI_WORKER_STALE_MS ?? "600000", 10);
 
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
@@ -26,81 +22,71 @@ const prisma = new PrismaClient({ adapter });
 async function recoverStaleRunning() {
   const staleThreshold = new Date(Date.now() - STALE_MS);
 
-  // Prompt jobs
-  const stalePrompts = await prisma.promptGenerationJob.updateMany({
-    where: {
-      status: "running",
-      startedAt: { lt: staleThreshold },
-      attempts: { lt: 3 },
-    },
-    data: { status: "pending" },
+  // Fetch stale running jobs with their maxAttempts
+  const stalePromptJobs = await prisma.promptGenerationJob.findMany({
+    where: { status: "running", startedAt: { lt: staleThreshold } },
+    select: { id: true, attempts: true, maxAttempts: true },
   });
-  if (stalePrompts.count > 0) {
-    console.log(`[worker] Recovered ${stalePrompts.count} stale prompt job(s) → pending`);
+
+  for (const j of stalePromptJobs) {
+    if (j.attempts < j.maxAttempts) {
+      await prisma.promptGenerationJob.update({
+        where: { id: j.id },
+        data: { status: "pending" },
+      });
+      console.log(`[worker] Recovered stale prompt job ${j.id.substring(0, 8)} → pending`);
+    } else {
+      await prisma.promptGenerationJob.update({
+        where: { id: j.id },
+        data: {
+          status: "failed",
+          errorMessage: "任务执行超时，多次重试后仍失败",
+          completedAt: new Date(),
+        },
+      });
+      console.log(`[worker] Dead prompt job ${j.id.substring(0, 8)} → failed`);
+    }
   }
 
-  // Prompt jobs over maxAttempts — mark failed
-  const deadPrompts = await prisma.promptGenerationJob.updateMany({
-    where: {
-      status: "running",
-      startedAt: { lt: staleThreshold },
-      attempts: { gte: 3 },
-    },
-    data: {
-      status: "failed",
-      errorMessage: "任务执行超时，多次重试后仍失败",
-      completedAt: new Date(),
-    },
+  const staleArticleJobs = await prisma.articleGenerationJob.findMany({
+    where: { status: "running", startedAt: { lt: staleThreshold } },
+    select: { id: true, attempts: true, maxAttempts: true },
   });
-  if (deadPrompts.count > 0) {
-    console.log(`[worker] Marked ${deadPrompts.count} dead prompt job(s) → failed`);
-  }
 
-  // Article jobs
-  const staleArticles = await prisma.articleGenerationJob.updateMany({
-    where: {
-      status: "running",
-      startedAt: { lt: staleThreshold },
-      attempts: { lt: 3 },
-    },
-    data: { status: "pending" },
-  });
-  if (staleArticles.count > 0) {
-    console.log(`[worker] Recovered ${staleArticles.count} stale article job(s) → pending`);
-  }
-
-  const deadArticles = await prisma.articleGenerationJob.updateMany({
-    where: {
-      status: "running",
-      startedAt: { lt: staleThreshold },
-      attempts: { gte: 3 },
-    },
-    data: {
-      status: "failed",
-      errorMessage: "任务执行超时，多次重试后仍失败",
-      completedAt: new Date(),
-    },
-  });
-  if (deadArticles.count > 0) {
-    console.log(`[worker] Marked ${deadArticles.count} dead article job(s) → failed`);
+  for (const j of staleArticleJobs) {
+    if (j.attempts < j.maxAttempts) {
+      await prisma.articleGenerationJob.update({
+        where: { id: j.id },
+        data: { status: "pending" },
+      });
+      console.log(`[worker] Recovered stale article job ${j.id.substring(0, 8)} → pending`);
+    } else {
+      await prisma.articleGenerationJob.update({
+        where: { id: j.id },
+        data: {
+          status: "failed",
+          errorMessage: "任务执行超时，多次重试后仍失败",
+          completedAt: new Date(),
+        },
+      });
+      console.log(`[worker] Dead article job ${j.id.substring(0, 8)} → failed`);
+    }
   }
 }
 
 /**
- * Atomic claim: atomically mark ONE pending job as running.
- * Uses a transaction: find the first eligible job, then updateMany to claim it.
- * This prevents multiple workers from grabbing the same job.
+ * Atomic claim: fetch ONE pending candidate with its maxAttempts,
+ * check attempts < maxAttempts in JS, then atomically claim via updateMany.
  */
 async function claimPromptJob(): Promise<string | null> {
   return prisma.$transaction(async (tx) => {
     const job = await tx.promptGenerationJob.findFirst({
-      where: { status: "pending", attempts: { lt: 3 } },
+      where: { status: "pending" },
       orderBy: { createdAt: "asc" },
-      select: { id: true },
+      select: { id: true, attempts: true, maxAttempts: true },
     });
-    if (!job) return null;
+    if (!job || job.attempts >= job.maxAttempts) return null;
 
-    // Atomically claim it — only succeeds if still pending
     const result = await tx.promptGenerationJob.updateMany({
       where: { id: job.id, status: "pending" },
       data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } },
@@ -112,11 +98,11 @@ async function claimPromptJob(): Promise<string | null> {
 async function claimArticleJob(): Promise<string | null> {
   return prisma.$transaction(async (tx) => {
     const job = await tx.articleGenerationJob.findFirst({
-      where: { status: "pending", attempts: { lt: 3 } },
+      where: { status: "pending" },
       orderBy: { createdAt: "asc" },
-      select: { id: true },
+      select: { id: true, attempts: true, maxAttempts: true },
     });
-    if (!job) return null;
+    if (!job || job.attempts >= job.maxAttempts) return null;
 
     const result = await tx.articleGenerationJob.updateMany({
       where: { id: job.id, status: "pending" },
@@ -130,19 +116,15 @@ async function main() {
   console.log(`[worker] AI worker started. Poll: ${POLL_MS}ms, Stale: ${STALE_MS}ms`);
   console.log(`[worker] Press Ctrl+C to stop.`);
 
-  // Recovery on startup
   await recoverStaleRunning();
-
   let lastRecovery = Date.now();
 
   const timer = setInterval(async () => {
-    // Periodic stale recovery (every 30s)
     if (Date.now() - lastRecovery > 30000) {
       await recoverStaleRunning();
       lastRecovery = Date.now();
     }
 
-    // Try prompt first, then article
     const promptId = await claimPromptJob();
     if (promptId) {
       console.log(`[worker] Claimed prompt job ${promptId.substring(0, 8)}`);
@@ -153,7 +135,7 @@ async function main() {
       } catch (e) {
         console.error(`[worker] Prompt job ${promptId.substring(0, 8)} error:`, (e as Error).message);
       }
-      return; // One job per poll
+      return;
     }
 
     const articleId = await claimArticleJob();

@@ -73,7 +73,7 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
   if (!article || article.userId !== job.userId) {
     await prisma.articleGenerationJob.update({
       where: { id: jobId },
-      data: { status: "failed", errorMessage: "关联文章不存在或归属异常" },
+      data: { status: "failed", errorMessage: "关联文章不存在或归属异常", completedAt: new Date() },
     });
     return;
   }
@@ -84,7 +84,7 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
     if (!p || p.userId !== job.userId) {
       await prisma.articleGenerationJob.update({
         where: { id: jobId },
-        data: { status: "failed", errorMessage: "关联提示词不存在或归属异常" },
+        data: { status: "failed", errorMessage: "关联提示词不存在或归属异常", completedAt: new Date() },
       });
       await prisma.article.update({
         where: { id: article.id },
@@ -99,7 +99,7 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
   if (!user) {
     await prisma.articleGenerationJob.update({
       where: { id: jobId },
-      data: { status: "failed", errorMessage: "用户不存在" },
+      data: { status: "failed", errorMessage: "用户不存在", completedAt: new Date() },
     });
     return;
   }
@@ -211,7 +211,7 @@ export async function retryArticleGenerationJob(jobId: string, userId: string): 
 
   const updated = await prisma.articleGenerationJob.update({
     where: { id: jobId },
-    data: { status: "pending", errorMessage: null, attempts: job.attempts + 1 },
+    data: { status: "pending", errorMessage: null, startedAt: null, completedAt: null },
   });
   return updated;
 }
