@@ -543,19 +543,21 @@ button:hover .tool-icon-motion,
   position: relative; z-index: 1;
 }
 .auth-form-card.forward {
-  transform: translateX(0) scale(1); opacity: 1;
+  transform: translateX(0) scale(1); opacity: 1; visibility: visible;
 }
 .auth-form-card.back {
   transform: translateX(40px) scale(0.96); opacity: 0;
-  pointer-events: none; position: absolute; top: 0; left: 0; right: 0;
+  visibility: hidden; pointer-events: none;
+  position: absolute; top: 0; left: 0; right: 0;
 }
 .auth-shell.register-mode .auth-form-card[data-mode="login"] {
   transform: translateX(-40px) scale(0.96); opacity: 0;
-  pointer-events: none; position: absolute; top: 0; left: 0; right: 0;
+  visibility: hidden; pointer-events: none;
+  position: absolute; top: 0; left: 0; right: 0;
 }
 .auth-shell.register-mode .auth-form-card[data-mode="register"] {
   transform: translateX(0) scale(1); opacity: 1;
-  pointer-events: auto; position: relative;
+  visibility: visible; pointer-events: auto; position: relative;
 }
 .auth-error, .auth-status {
   animation: drawerExpandIn 0.25s cubic-bezier(0.16,1,0.3,1) both;
@@ -567,11 +569,14 @@ button:hover .tool-icon-motion,
   .auth-brand::before { display: none; }
   .auth-mini-cards { display: none; }
   .auth-form-area { flex: 1; padding: 1.5rem; }
-  .auth-form-card.forward, .auth-form-card.back,
+  /* Mobile: cancel transforms but keep mode-based visibility */
+  .auth-form-card.forward,
+  .auth-form-card.back,
   .auth-shell.register-mode .auth-form-card[data-mode="login"],
   .auth-shell.register-mode .auth-form-card[data-mode="register"] {
-    transform: none; opacity: 1; pointer-events: auto;
-    position: relative; max-width: 100%;
+    transform: none;
+    max-width: 100%;
+    /* DO NOT override opacity or pointer-events — .back handles visibility */
   }
 }
 
@@ -584,8 +589,9 @@ button:hover .tool-icon-motion,
   .auth-brand, .auth-brand::before, .auth-form-card, .auth-mini-card,
   .auth-error, .auth-status {
     animation: none;
-    opacity: 1;
+    /* opacity:1 is needed for depth-stage children but NOT for auth-form-card */
   }
+  .depth-stage > * { opacity: 1; }
   .glass-card, .glass-panel, .glass-tile,
   .glass-btn-primary, .glass-btn-secondary, .glass-btn-danger,
   .glass-pill, .glass-segmented button,
@@ -599,43 +605,12 @@ button:hover .tool-icon-motion,
   .group:hover .tool-icon-motion {
     transform: none;
   }
-  .auth-form-card.forward, .auth-form-card.back,
+  /* Auth: disable transforms but keep mode-based visibility (NO opacity/pointer-events change) */
+  .auth-form-card.forward,
+  .auth-form-card.back,
   .auth-shell.register-mode .auth-form-card[data-mode="login"],
   .auth-shell.register-mode .auth-form-card[data-mode="register"] {
-    transform: none; opacity: 1; pointer-events: auto; position: relative;
-  }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   Reduced motion — respect user preference
-   ═══════════════════════════════════════════════════════════════ */
-
-@media (prefers-reduced-motion: reduce) {
-  .depth-page,
-  .depth-stage > *,
-  .depth-tab-content,
-  .depth-drawer,
-  .depth-modal-backdrop,
-  .depth-modal,
-  .modal-backdrop,
-  .modal-float,
-  .motion-generating,
-  .motion-task::after,
-  .motion-success {
-    animation: none;
-    opacity: 1;
-  }
-  .glass-card, .glass-panel, .glass-tile,
-  .glass-btn-primary, .glass-btn-secondary, .glass-btn-danger,
-  .glass-pill, .glass-segmented button,
-  .tool-icon-motion, .glass-sidebar-item {
-    transition: none;
-  }
-  .glass-card:hover, .glass-panel:hover, .glass-tile:hover,
-  .glass-btn-primary:hover, .glass-btn-secondary:hover,
-  .glass-pill:hover, .glass-segmented button:hover,
-  a:hover .tool-icon-motion, button:hover .tool-icon-motion,
-  .group:hover .tool-icon-motion {
     transform: none;
   }
 }
+
