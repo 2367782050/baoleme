@@ -1,7 +1,8 @@
 /**
- * Phase 14B: Enhanced console error test.
- * Registers ALL error listeners before ANY navigation.
- * Covers unauthenticated + authenticated + interaction pages.
+ * Phase 15D: Console error test — no hiding real errors.
+ * Only acceptable: hydration dev warnings, net::ERR_ABORTED,
+ * and 401 on /api/auth/me from Header server component.
+ * Everything else — any 500, any non-/api/auth/me 401, any 403, any 404 — must fail.
  */
 import { test, expect } from "@playwright/test";
 
@@ -22,9 +23,9 @@ test.describe("Console errors across all pages", () => {
       !e.includes("hydration") &&
       !e.includes("net::ERR_ABORTED")
     );
-    // Only acceptable: 401 from Header server component on unauthenticated pages
+    // Only acceptable: 401 on /api/auth/me from Header server component
     const unacceptable = relevant.filter(e => {
-      if (e.includes("401") && (e.includes("Unauthorized") || e.includes("/api/auth/me"))) return false;
+      if (e.includes("401") && e.includes("/api/auth/me")) return false;
       return true;
     });
     expect(unacceptable).toHaveLength(0);
@@ -41,7 +42,7 @@ test.describe("Console errors across all pages", () => {
       }
     });
     page.on("response", (resp) => {
-      // The Header server component fetches /api/auth/me on every page — 401 is expected for unauthenticated
+      // ONLY ignore 401 on /api/auth/me — Header server component's expected behavior
       if (resp.status() === 401 && resp.url().includes("/api/auth/me")) return;
       if (resp.status() >= 400 && resp.status() !== 307) {
         errors.push(`HTTP ${resp.status()}: ${resp.url()}`);
@@ -88,10 +89,10 @@ test.describe("Console errors across all pages", () => {
       !e.includes("hydration") &&
       !e.includes("net::ERR_ABORTED")
     );
-    // Only acceptable HTTP errors: 401 on /api/auth/me from Header server component
+    // ONLY acceptable: 401 on /api/auth/me from Header server component
+    // Everything else — 500, 403, 404, non-/api/auth/me 401 — must fail.
     const unacceptable = relevant.filter(e => {
       if (e.includes("401") && e.includes("/api/auth/me")) return false;
-      if (e.includes("401") && e.includes("Unauthorized")) return false;
       return true;
     });
     expect(unacceptable).toHaveLength(0);
