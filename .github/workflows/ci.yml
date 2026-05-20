@@ -78,6 +78,12 @@ jobs:
           sleep 5
           curl --retry 5 --retry-delay 2 http://localhost:3000/api/health
 
+      - name: Start AI worker (mock, DB-persistent)
+        run: |
+          npx tsx scripts/ai-worker.ts &
+          sleep 2
+          echo "AI worker started"
+
       - name: Console check (tsx)
         run: npx tsx scripts/console-check.ts
 
