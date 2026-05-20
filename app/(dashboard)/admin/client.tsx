@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { formatUserStatus, formatOrderStatus, formatWithdrawalStatus, formatJobStatus, formatRole } from "@/lib/ui/labels";
+import { useModal } from "@/components/ui/modal";
 
 const SIDEBAR_ITEMS = ["概览","用户管理","会员管理","订单管理","提现审核","AI 任务"] as const;
 type Tab = (typeof SIDEBAR_ITEMS)[number];
@@ -17,6 +18,7 @@ const SIDEBAR_ICONS: Record<Tab, string> = {
 };
 
 export function AdminClient() {
+  const modal = useModal();
   const [tab,setTab]=useState<Tab>("概览"); const [error,setError]=useState("");
   const [users,setUsers]=useState<Record<string,unknown>[]>([]);
   const [orders,setOrders]=useState<Record<string,unknown>[]>([]);
@@ -29,7 +31,8 @@ export function AdminClient() {
   useEffect(()=>{let c=false;async function load(){const[uR,oR,wR,pR,aR]=await Promise.allSettled([fetch("/api/admin/users?pageSize=100").then(r=>r.json()),fetch("/api/admin/orders?pageSize=100").then(r=>r.json()),fetch("/api/admin/withdrawals?pageSize=100").then(r=>r.json()),fetch("/api/admin/jobs/prompts").then(r=>r.json()),fetch("/api/admin/jobs/articles").then(r=>r.json())]);if(c)return;const ub=uR.status==="fulfilled"?uR.value:null;if(!ub?.success){setError(ub?.error?.message??"无权限");return}setUsers(ub.data.items);if(oR.status==="fulfilled"&&oR.value.data)setOrders(oR.value.data.items);if(wR.status==="fulfilled"&&wR.value.data)setWithdrawals(wR.value.data.items);if(pR.status==="fulfilled"&&pR.value.data)setPj(pR.value.data.items);if(aR.status==="fulfilled"&&aR.value.data)setAj(aR.value.data.items)}load();return()=>{c=true}},[]);
 
   async function toggleUserStatus(id:string,status:string){const ns=status==="active"?"disabled":"active";await fetch(`/api/admin/users/${id}/status`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({status:ns})});await refreshList("/api/admin/users?pageSize=100",setUsers)}
-  async function generateCodes(){const pid=prompt("套餐 ID:");if(!pid)return;const cnt=prompt("数量:");if(!cnt)return;const r=await fetch("/api/admin/membership/codes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planId:pid,count:Number(cnt)})});const b=await r.json();alert(b.success?`已生成: ${b.data.codes.join(", ")}`:(b.error?.message??"失败"))}
+  // TODO: 后续改为玻璃弹窗表单（替换原生 prompt）
+  async function generateCodes(){const pid=prompt("套餐 ID:");if(!pid)return;const cnt=prompt("数量:");if(!cnt)return;const r=await fetch("/api/admin/membership/codes",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planId:pid,count:Number(cnt)})});const b=await r.json();if(b.success){await modal.open({title:"生成成功",message:`已生成 ${b.data.codes.length} 个会员码: ${b.data.codes.join(", ")}`})}else{await modal.open({title:"生成失败",message:b.error?.message??"失败"})}}
   async function reviewW(id:string,action:string){await fetch(`/api/admin/withdrawals/${id}`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action})});await refreshList("/api/admin/withdrawals?pageSize=100",setWithdrawals)}
   async function openTab(t:Tab){setTab(t);if(t==="用户管理")await refreshList("/api/admin/users?pageSize=100",setUsers);if(t==="订单管理")await refreshList("/api/admin/orders?pageSize=100",setOrders);if(t==="提现审核")await refreshList("/api/admin/withdrawals?pageSize=100",setWithdrawals);if(t==="AI 任务"){await refreshList("/api/admin/jobs/prompts",setPj);await refreshList("/api/admin/jobs/articles",setAj)}}
 

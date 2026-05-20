@@ -77,11 +77,17 @@ const PLAN_CODE: Record<string, string> = {
 // ─── 配额 key → 中文名 ────────────────────────────────────────
 const QUOTA_KEY: Record<string, string> = {
   prompt_generate: "提示词生成",
+  prompt_generate_monthly: "每月提示词生成",
   article_generate: "文章生成",
+  article_generate_daily: "每日文章生成",
   material_export: "素材导出",
+  material_export_daily: "每日素材导出",
   image_upload: "图片上传",
+  image_upload_daily: "每日图片上传",
   draft_push: "草稿推送",
+  draft_push_daily: "每日草稿推送",
   official_account_bind: "公众号数",
+  official_account_limit: "公众号数量",
 };
 
 // ─── 会员来源 ──────────────────────────────────────────────────

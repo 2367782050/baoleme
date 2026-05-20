@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useModal } from "@/components/ui/modal";
 
 type Group = {
   id: string;
@@ -19,6 +20,7 @@ export function GroupList({
   onSelect: (id: string | null) => void;
   onRefresh: () => void;
 }) {
+  const modal = useModal();
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -37,10 +39,10 @@ export function GroupList({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("确定删除此分组？")) return;
+    if (!(await modal.open({ title: "删除分组", message: "确定删除此分组？如分组内有提示词则无法删除。", confirmLabel: "删除", variant: "danger" }))) return;
     const res = await fetch(`/api/prompts/groups?id=${id}`, { method: "DELETE" });
     const body = await res.json();
-    if (!body.success) { alert(body.error?.message ?? "删除失败"); return; }
+    if (!body.success) { await modal.open({ title: "删除失败", message: body.error?.message ?? "删除失败" }); return; }
     if (selectedId === id) onSelect(null);
     onRefresh();
   }
@@ -61,12 +63,14 @@ export function GroupList({
         {groups.map(g => (
           <li key={g.id}>
             {editingId === g.id ? (
-              <div className="px-3 py-1 flex gap-1">
+              <div className="space-y-2 py-1">
                 <input autoFocus value={editName} onChange={e => setEditName(e.target.value)}
-                  className="flex-1 text-sm glass-input !py-1 !px-2 !rounded-xl" placeholder="分组名称"
+                  className="w-full text-sm glass-input !py-1.5 !px-3 !rounded-xl" placeholder="分组名称"
                   onKeyDown={e => e.key === "Enter" && handleUpdate(g.id)} />
-                <button onClick={() => handleUpdate(g.id)} className="text-xs text-teal-600 font-medium">保存</button>
-                <button onClick={() => setEditingId(null)} className="text-xs text-zinc-400">取消</button>
+                <div className="flex justify-end gap-2">
+                  <button onClick={() => setEditingId(null)} className="text-xs text-zinc-500 hover:text-zinc-700">取消</button>
+                  <button onClick={() => handleUpdate(g.id)} className="text-xs font-medium text-teal-600">保存</button>
+                </div>
               </div>
             ) : (
               <div className="group flex items-center">
@@ -84,12 +88,14 @@ export function GroupList({
         ))}
       </ul>
       {adding && (
-        <div className="mt-2 flex gap-1">
+        <div className="mt-2 space-y-2">
           <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="分组名称"
-            className="flex-1 text-sm glass-input !py-1 !px-2 !rounded-xl"
+            className="w-full text-sm glass-input !py-1.5 !px-3 !rounded-xl"
             onKeyDown={e => e.key === "Enter" && handleCreate()} />
-          <button onClick={handleCreate} className="text-sm text-teal-600 font-medium px-2">确定</button>
-          <button onClick={() => setAdding(false)} className="text-sm text-zinc-400">取消</button>
+          <div className="flex justify-end gap-2">
+            <button onClick={() => setAdding(false)} className="text-xs text-zinc-500 hover:text-zinc-700">取消</button>
+            <button onClick={handleCreate} className="text-xs font-medium text-teal-600">确定</button>
+          </div>
         </div>
       )}
     </div>

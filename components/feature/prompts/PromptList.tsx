@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useModal } from "@/components/ui/modal";
 import { formatPromptSource } from "@/lib/ui/labels";
 
 type Group = { id: string; name: string };
@@ -29,8 +30,10 @@ export function PromptList({ groupId, refreshKey, onRefresh }: { groupId: string
     load();
   }, [groupId, keyword, refreshKey]);
 
+  const modal = useModal();
+
   async function handleDelete(id: string) {
-    if (!confirm("确定删除此提示词？")) return;
+    if (!(await modal.open({ title: "删除提示词", message: "确定删除此提示词？", confirmLabel: "删除", variant: "danger" }))) return;
     await fetch(`/api/prompts/${id}`, { method: "DELETE" }); onRefresh();
   }
 

@@ -85,24 +85,26 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         {/* Stats — tighter, stronger numbers */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "内容创作", value: "12", sub: "篇", color: "text-teal-600" },
-            { label: "爆款产出", value: "5", sub: "篇 10w+", color: "text-orange-600" },
-            { label: "阅读量", value: "128K", sub: "总阅读", color: "text-sky-600" },
-            { label: "转化点击", value: "8.2K", sub: "总点击", color: "text-violet-600" },
-          ].map(({ label, value, sub, color }) => (
+            { label: "内容创作", value: "12", desc: "累计 12 篇", color: "text-teal-600" },
+            { label: "爆款产出", value: "5", desc: "10w+ 内容 5 篇", color: "text-orange-600" },
+            { label: "阅读量", value: "128K", desc: "累计阅读", color: "text-sky-600" },
+            { label: "转化点击", value: "8.2K", desc: "累计点击", color: "text-violet-600" },
+          ].map(({ label, value, desc, color }) => (
             <div key={label} className="glass-tile p-4">
               <p className={`text-3xl font-extrabold ${color} tracking-tight`}>{value}</p>
-              <p className="text-xs text-zinc-400 mt-1">{label} <span className="text-zinc-300">{sub}</span></p>
+              <p className="text-sm font-medium text-zinc-700 mt-1">{label}</p>
+              <p className="text-xs text-zinc-500 mt-0.5">{desc}</p>
             </div>
           ))}
         </div>
 
-        {/* Quota — compact row */}
+        {/* Quota — large number first, label below, usage on third line */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
           {Object.entries(data.quota).map(([k, v]) => (
-            <div key={k} className="glass-tile px-3 py-2.5">
-              <p className="text-[11px] text-zinc-400 truncate">{formatQuotaKey(k)}</p>
-              <p className="text-lg font-bold text-zinc-800">{v.remaining}<span className="text-xs text-zinc-400 font-normal">/{v.limit}</span></p>
+            <div key={k} className="glass-tile px-3 py-3 flex flex-col">
+              <p className="text-2xl font-extrabold text-zinc-900 tracking-tight">{v.remaining}</p>
+              <p className="text-xs font-medium text-zinc-500 mt-0.5">{formatQuotaKey(k)}</p>
+              <p className="text-[10px] text-zinc-400 mt-1">剩余 / {v.limit} 总额度</p>
             </div>
           ))}
         </div>

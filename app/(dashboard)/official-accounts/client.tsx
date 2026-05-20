@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatOAStatus } from "@/lib/ui/labels";
+import { useModal } from "@/components/ui/modal";
 
 type OA = { id: string; name: string; appid: string; status: string; group: { name: string } | null };
 
@@ -18,8 +19,10 @@ export function OAClient() {
     load(); return () => { c = true; };
   }, [refresh]);
 
+  const modal = useModal();
+
   async function handleCreate(e: React.FormEvent) { e.preventDefault(); if (!name.trim()) return; const r = await fetch("/api/official-accounts", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: name.trim() }) }); const b = await r.json(); if (!b.success) { setError(b.error?.message ?? "创建失败"); return; } setName(""); setError(""); setRefresh(k => k + 1); }
-  async function handleDelete(id: string) { if (!confirm("确定删除？")) return; await fetch(`/api/official-accounts?id=${id}`, { method: "DELETE" }); setRefresh(k => k + 1); }
+  async function handleDelete(id: string) { if (!(await modal.open({ title: "删除公众号", message: "确定删除这个公众号？", confirmLabel: "删除", variant: "danger" }))) return; await fetch(`/api/official-accounts?id=${id}`, { method: "DELETE" }); setRefresh(k => k + 1); }
 
   return (
     <div className="glass-page pt-6 pb-20 px-6">

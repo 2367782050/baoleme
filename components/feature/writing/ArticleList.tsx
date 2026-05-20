@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useModal } from "@/components/ui/modal";
 
 type Article = { id: string; title: string | null; status: string; pushStatus: string; group: { name: string } | null; prompt: { name: string } | null; updatedAt: string };
 
@@ -30,8 +31,10 @@ export function ArticleList({
     load(); return () => { c = true; };
   }, [refreshKey, statusFilter, groupId, keyword, page]);
 
+  const modal = useModal();
+
   async function handleDelete(id: string) {
-    if (!confirm("确定删除？")) return;
+    if (!(await modal.open({ title: "删除文章", message: "确定删除这篇文章？", confirmLabel: "删除", variant: "danger" }))) return;
     await fetch(`/api/articles/${id}`, { method: "DELETE", credentials: "include" }); onRefresh();
   }
 

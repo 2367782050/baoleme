@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import Link from "next/link";
+import { LogoutButton } from "./LogoutButton";
 
 async function getUserInfo() {
   try {
@@ -53,6 +54,7 @@ export async function Header() {
               <span className="ml-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-400/15 to-teal-400/15 text-teal-700 text-xs font-semibold shrink-0">
                 {sessionData.user?.username ?? "用户"}
               </span>
+              <LogoutButton />
             </div>
           ) : (
             <nav className="flex items-center gap-3 text-sm">

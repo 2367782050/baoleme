@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { formatMembershipStatus, formatOrderStatus, formatQuotaKey, formatMembershipSource } from "@/lib/ui/labels";
+import { useModal } from "@/components/ui/modal";
 
 type MembershipInfo = { planName: string; planCode: string; status: string; startsAt: string; expiresAt: string; source: string; capabilities: Record<string, number> };
 type Plan = { id: string; code: string; name: string; priceCents: number; originalPriceCents: number; durationDays: number; capabilities: Record<string, number> };
@@ -17,8 +18,10 @@ export function MembershipClient({ current, plans, quota }: { current: { members
 
   async function refreshOrders() { const r = await fetch("/api/orders"); const b = await r.json(); if (b.success) setOrders(b.data); }
   async function handleRedeem(e: React.FormEvent) { e.preventDefault(); setRedeemMsg(""); const r = await fetch("/api/membership/redeem-code", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: redeemCode }) }); const b = await r.json(); setRedeemMsg(b.success ? (b.message ?? "兑换成功") : (b.error?.message ?? "兑换失败")); if (b.success) { setRedeemCode(""); window.location.reload(); } }
-  async function handlePay(orderId: string) { const r = await fetch(`/api/orders/${orderId}/mock-pay`, { method: "POST" }); const b = await r.json(); if (b.success) window.location.reload(); else alert(b.error?.message ?? "支付失败"); }
-  async function handleBuy(planId: string) { const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ planId }) }); const b = await r.json(); if (b.success) { alert("订单已创建，请模拟支付"); refreshOrders(); } else alert(b.error?.message ?? "创建失败"); }
+  const modal = useModal();
+
+  async function handlePay(orderId: string) { const r = await fetch(`/api/orders/${orderId}/mock-pay`, { method: "POST" }); const b = await r.json(); if (b.success) window.location.reload(); else await modal.open({ title: "支付失败", message: b.error?.message ?? "支付失败" }); }
+  async function handleBuy(planId: string) { const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ planId }) }); const b = await r.json(); if (b.success) { await modal.open({ title: "下单成功", message: "订单已创建，请模拟支付" }); refreshOrders(); } else await modal.open({ title: "下单失败", message: b.error?.message ?? "创建失败" }); }
 
   return (
     <div className="glass-page pt-6 pb-20 px-6">
@@ -29,11 +32,15 @@ export function MembershipClient({ current, plans, quota }: { current: { members
         <div className="glass-card p-6 mb-6">
           <h2 className="font-semibold text-zinc-900 mb-3">我的会员</h2>
           {membership ? (
-            <div className="flex flex-wrap gap-4 text-sm text-zinc-600">
-              <span className="font-medium text-zinc-900">{membership.planName}</span>
-              <span className={membership.status === "active" ? "badge-ok" : "badge-warn"}>{formatMembershipStatus(membership.status)}</span>
-              <span>到期: {new Date(membership.expiresAt).toLocaleDateString("zh-CN")}</span>
-              <span>来源: {formatMembershipSource(membership.source)}</span>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="text-lg font-bold text-zinc-900">{membership.planName}</span>
+                <span className={membership.status === "active" ? "badge-ok" : "badge-warn"}>{formatMembershipStatus(membership.status)}</span>
+              </div>
+              <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-zinc-500">
+                <span>到期: {new Date(membership.expiresAt).toLocaleDateString("zh-CN")}</span>
+                <span>来源: {formatMembershipSource(membership.source)}</span>
+              </div>
             </div>
           ) : <p className="text-sm text-zinc-400">暂无有效会员</p>}
         </div>
@@ -41,9 +48,10 @@ export function MembershipClient({ current, plans, quota }: { current: { members
         {/* Quota */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
           {Object.entries(quota).map(([key, val]) => (
-            <div key={key} className="glass-tile px-3 py-2.5">
-              <p className="text-[11px] text-zinc-400 truncate">{formatQuotaKey(key)}</p>
-              <p className="text-lg font-bold text-zinc-800">{val.remaining}<span className="text-xs text-zinc-400 font-normal">/{val.limit}</span></p>
+            <div key={key} className="glass-tile px-3 py-3 flex flex-col">
+              <p className="text-2xl font-extrabold text-zinc-900 tracking-tight">{val.remaining}</p>
+              <p className="text-xs font-medium text-zinc-500 mt-0.5">{formatQuotaKey(key)}</p>
+              <p className="text-[10px] text-zinc-400 mt-1">剩余 / {val.limit} 总额度</p>
             </div>
           ))}
         </div>

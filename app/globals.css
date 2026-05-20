@@ -329,6 +329,36 @@ button:hover .tool-icon-motion,
   transform: scale(1.08);
 }
 
+/* ── Glass range slider ─────────────────────────────────────── */
+
+.glass-range {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px;
+  background: rgba(255, 255, 255, 0.50);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  outline: none;
+}
+.glass-range::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px;
+  background: linear-gradient(135deg, #38bdf8, #2dd4bf);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(45, 212, 191, 0.30);
+  cursor: pointer;
+}
+.glass-range::-moz-range-thumb {
+  width: 18px; height: 18px;
+  background: linear-gradient(135deg, #38bdf8, #2dd4bf);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 4px 12px rgba(45, 212, 191, 0.30);
+  cursor: pointer;
+}
+
 /* ── Sidebar items ──────────────────────────────────────────── */
 
 .glass-sidebar-item {
