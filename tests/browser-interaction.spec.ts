@@ -243,9 +243,10 @@ test("OA: create mock OA, verify in list, delete removes it from active list", a
   await page.click("button:has-text('创建模拟公众号')");
   await expect(page.getByText(oaName)).toBeVisible({ timeout: 5000 });
 
-  await page.click("button:has-text('删除')");
-  // Glass modal appears — click confirm
-  await page.click("button:has-text('删除')");
+  // Click delete on the OA card
+  await page.locator(".glass-tile").filter({ hasText: oaName }).locator("button:has-text('删除')").click();
+  // Glass modal appears — click confirm inside the modal
+  await page.locator(".modal-float").getByRole("button", { name: "删除" }).click();
   await expect(page.getByText(oaName)).not.toBeVisible({ timeout: 5000 });
 });
 
@@ -363,7 +364,7 @@ test("admin: disable/enable user, verify panels, approve withdrawal in browser",
 
   await page.click("button:has-text('订单管理')");
   await expect(page.locator("[data-testid='admin-orders-panel']")).toBeVisible({ timeout: 3000 });
-  await expect(page.locator("[data-testid='admin-orders-panel']")).toContainText(/订单|暂无订单|paid|pending/);
+  await expect(page.locator("[data-testid='admin-orders-panel']")).toContainText(/订单|暂无订单|已支付|待支付/);
 
   const adminCookie = await loginCookie(page, "admin", "admin123");
   const adminWithdrawalsRes = await page.request.get(`${BASE}/api/admin/withdrawals?pageSize=100`, {
@@ -377,9 +378,9 @@ test("admin: disable/enable user, verify panels, approve withdrawal in browser",
   await page.click("button:has-text('提现审核')");
   const withdrawalRow = page.locator(`[data-testid='admin-withdrawal-row-${withdrawal.id}']`);
   await expect(withdrawalRow).toContainText(alipayName, { timeout: 5000 });
-  await expect(withdrawalRow).toContainText("pending");
+  await expect(withdrawalRow).toContainText("待处理");
   await withdrawalRow.getByRole("button", { name: "通过" }).click();
-  await expect(withdrawalRow).toContainText("approved", { timeout: 5000 });
+  await expect(withdrawalRow).toContainText("已通过", { timeout: 5000 });
 
   await page.click("button:has-text('AI 任务')");
   await expect(page.locator("[data-testid='admin-ai-panel']")).toContainText("提示词生成任务");
