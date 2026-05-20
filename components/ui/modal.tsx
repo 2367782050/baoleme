@@ -63,11 +63,11 @@ export function ModalProvider({ children }: { children: ReactNode }) {
       {modals.map((m) => (
         <div
           key={m.id}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/25 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/25 backdrop-blur-sm modal-backdrop"
           onClick={() => close(m.id, false)}
         >
           <div
-            className="glass-card p-6 w-full max-w-sm mx-4"
+            className="glass-card p-6 w-full max-w-sm mx-4 modal-float"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-zinc-900">{m.title}</h3>

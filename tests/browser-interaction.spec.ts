@@ -230,7 +230,7 @@ test("formatter: edit markdown, preview shows rendered HTML, copy button active"
   await page.locator("textarea").first().fill("# 浏览器测试标题\n\n这是**加粗**文字\n\n- 项目1\n- 项目2");
   await page.click("button:has-text('预览')");
   await expect(page.locator("h1:has-text('浏览器测试标题')")).toBeVisible({ timeout: 5000 });
-  await expect(page.getByRole("button", { name: "复制 HTML" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "复制排版代码" })).toBeVisible();
 });
 
 test("OA: create mock OA, verify in list, delete removes it from active list", async ({ page }) => {
@@ -240,10 +240,11 @@ test("OA: create mock OA, verify in list, delete removes it from active list", a
 
   const oaName = `OA_浏览器_${Date.now().toString(36)}`;
   await page.fill("input[placeholder='公众号名称']", oaName);
-  await page.click("button:has-text('创建 mock 公众号')");
+  await page.click("button:has-text('创建模拟公众号')");
   await expect(page.getByText(oaName)).toBeVisible({ timeout: 5000 });
 
-  page.once("dialog", async (dialog) => { await dialog.accept(); });
+  await page.click("button:has-text('删除')");
+  // Glass modal appears — click confirm
   await page.click("button:has-text('删除')");
   await expect(page.getByText(oaName)).not.toBeVisible({ timeout: 5000 });
 });
@@ -256,12 +257,14 @@ test("membership: create order, mock pay, verify order status becomes paid", asy
 
   page.once("dialog", async (dialog) => { await dialog.accept(); });
   await page.locator("button:has-text('开通'):not(:has-text('默认'))").first().click();
+  // Glass modal appears — click confirm
+  await page.locator(".modal-float button:has-text('确定')").click();
 
   // Wait for the order to appear (plan name + order number pattern)
-  const orderRow = page.locator("div").filter({ hasText: /专业版|企业版/ }).filter({ hasText: /pending|paid/ }).first();
+  const orderRow = page.locator("div").filter({ hasText: /专业版|企业版/ }).filter({ hasText: /待支付|已支付/ }).first();
   await expect(orderRow).toBeVisible({ timeout: 8000 });
   // Verify the order status shows pending
-  await expect(orderRow).toContainText(/pending/);
+  await expect(orderRow).toContainText(/待支付/);
   const payButton = orderRow.getByRole("button", { name: "模拟支付" });
   await expect(payButton).toBeVisible({ timeout: 5000 });
   await payButton.click();
@@ -269,7 +272,7 @@ test("membership: create order, mock pay, verify order status becomes paid", asy
   // After payment, verify membership plan appears (it will show the plan name)
   await expect(page.getByText("我的会员")).toBeVisible({ timeout: 10000 });
   // Verify order shows paid
-  await expect(orderRow).toContainText(/paid/, { timeout: 10000 });
+  await expect(orderRow).toContainText(/已支付/, { timeout: 10000 });
 });
 
 test("referral: shows invite code, tabs, withdrawal form", async ({ page }) => {
@@ -343,16 +346,16 @@ test("admin: disable/enable user, verify panels, approve withdrawal in browser",
   await expect(userRow).toBeVisible({ timeout: 5000 });
   const toggleButton = userRow.locator("[data-testid^='admin-user-toggle-']");
   const statusText = userRow.locator("[data-testid^='admin-user-status-']");
-  if ((await statusText.textContent()) !== "active") {
+  if ((await statusText.textContent()) !== "正常") {
     await toggleButton.click();
-    await expect(statusText).toHaveText("active", { timeout: 5000 });
+    await expect(statusText).toHaveText("正常", { timeout: 5000 });
   }
   await expect(toggleButton).toHaveText("禁用", { timeout: 5000 });
   await toggleButton.click();
-  await expect(statusText).toHaveText("disabled", { timeout: 5000 });
+  await expect(statusText).toHaveText("已禁用", { timeout: 5000 });
   await expect(toggleButton).toHaveText("启用", { timeout: 5000 });
   await toggleButton.click();
-  await expect(statusText).toHaveText("active", { timeout: 5000 });
+  await expect(statusText).toHaveText("正常", { timeout: 5000 });
   await expect(toggleButton).toHaveText("禁用", { timeout: 5000 });
 
   await page.click("button:has-text('会员管理')");

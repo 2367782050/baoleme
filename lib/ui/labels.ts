@@ -93,6 +93,7 @@ const QUOTA_KEY: Record<string, string> = {
 // ─── 会员来源 ──────────────────────────────────────────────────
 const MEMBERSHIP_SOURCE: Record<string, string> = {
   purchase: "购买",
+  order: "订单购买",
   redeem: "兑换码",
   admin: "管理员开通",
   trial: "试用",

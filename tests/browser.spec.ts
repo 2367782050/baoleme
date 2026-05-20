@@ -6,7 +6,7 @@ test.describe("Public pages", () => {
   test("/ returns 200 and shows product name", async ({ page }) => {
     await page.goto(BASE);
     await expect(page.getByRole("heading", { name: "爆了么" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "开始创作" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "开始使用" })).toBeVisible();
   });
   test("/login shows login form", async ({ page }) => {
     await page.goto(`${BASE}/login`);
@@ -74,7 +74,7 @@ test.describe("Dashboard pages (as admin)", () => {
   test("formatter has editor and buttons", async ({ page }) => {
     await page.goto(`${BASE}/formatter`);
     await expect(page.getByRole("button", { name: "预览" })).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole("button", { name: "复制 HTML" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "复制排版代码" })).toBeVisible();
     await expect(page.locator("textarea").first()).toBeVisible();
   });
 

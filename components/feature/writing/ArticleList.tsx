@@ -66,7 +66,7 @@ export function ArticleList({
               <p className="text-xs text-zinc-400 mt-0.5">{a.group?.name ?? "未分组"} · {a.prompt?.name ?? "无提示词"} · {new Date(a.updatedAt).toLocaleDateString()}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span data-testid={`article-status-${a.id}`} className={a.status === "completed" ? "badge-ok" : a.status === "failed" ? "badge-err" : a.status === "generating" ? "badge-info" : "badge-muted"}>{labels[a.status] ?? a.status}</span>
+              <span data-testid={`article-status-${a.id}`} className={a.status === "completed" ? "badge-ok" : a.status === "failed" ? "badge-err" : a.status === "generating" ? "badge-info motion-generating" : "badge-muted"}>{labels[a.status] ?? a.status}</span>
               <Link href={`/formatter?articleId=${a.id}`} className="text-xs text-zinc-400 hover:text-zinc-600">排版</Link>
               <button onClick={() => handleDelete(a.id)} className="text-xs text-red-400 hover:text-red-600">删除</button>
             </div>

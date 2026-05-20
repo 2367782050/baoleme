@@ -237,77 +237,98 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Phase 16 — Light Motion Effects
-   No external dependencies. Pure CSS.
+   Phase 17 — Spatial Depth Motion System
+   Pure CSS. No Framer Motion, no GSAP.
    ═══════════════════════════════════════════════════════════════ */
 
-/* ── Page entry ─────────────────────────────────────────────── */
+/* ── Page entry — soft float up ─────────────────────────────── */
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+@keyframes floatUpIn {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .motion-entry {
-  animation: fadeInUp 0.5s ease-out both;
+  animation: floatUpIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ── Staggered children ─────────────────────────────────────── */
 
 .motion-stagger > * {
   opacity: 0;
-  animation: fadeInUp 0.4s ease-out forwards;
+  animation: floatUpIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
-.motion-stagger > *:nth-child(1) { animation-delay: 0.05s; }
-.motion-stagger > *:nth-child(2) { animation-delay: 0.10s; }
-.motion-stagger > *:nth-child(3) { animation-delay: 0.15s; }
-.motion-stagger > *:nth-child(4) { animation-delay: 0.20s; }
-.motion-stagger > *:nth-child(5) { animation-delay: 0.25s; }
-.motion-stagger > *:nth-child(6) { animation-delay: 0.30s; }
-.motion-stagger > *:nth-child(7) { animation-delay: 0.35s; }
-.motion-stagger > *:nth-child(8) { animation-delay: 0.40s; }
-.motion-stagger > *:nth-child(9) { animation-delay: 0.45s; }
-.motion-stagger > *:nth-child(10){ animation-delay: 0.50s; }
+.motion-stagger > *:nth-child(1) { animation-delay: 0.06s; }
+.motion-stagger > *:nth-child(2) { animation-delay: 0.12s; }
+.motion-stagger > *:nth-child(3) { animation-delay: 0.18s; }
+.motion-stagger > *:nth-child(4) { animation-delay: 0.24s; }
+.motion-stagger > *:nth-child(5) { animation-delay: 0.30s; }
+.motion-stagger > *:nth-child(6) { animation-delay: 0.36s; }
+.motion-stagger > *:nth-child(7) { animation-delay: 0.42s; }
+.motion-stagger > *:nth-child(8) { animation-delay: 0.48s; }
+.motion-stagger > *:nth-child(9) { animation-delay: 0.54s; }
+.motion-stagger > *:nth-child(10){ animation-delay: 0.60s; }
 
-/* ── Glass card hover ──────────────────────────────────────── */
+/* ── Spatial float-forward on hover ─────────────────────────── */
 
 .glass-card,
 .glass-panel,
 .glass-tile {
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.35s ease;
+  transform: translateZ(0);
 }
-.glass-card:hover,
-.glass-panel:hover,
-.glass-tile:hover {
-  transform: translateY(-2px);
+.glass-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 32px 80px rgba(15, 23, 42, 0.12);
+  border-color: rgba(255, 255, 255, 0.90);
+}
+.glass-panel:hover {
+  transform: translateY(-3px) scale(1.005);
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.10);
   border-color: rgba(255, 255, 255, 0.85);
 }
+.glass-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.09);
+  border-color: rgba(255, 255, 255, 0.82);
+}
 
-/* ── Glass buttons ─────────────────────────────────────────── */
+/* Admin restraint */
+.admin-glass-page .glass-card:hover,
+.admin-glass-page .glass-panel:hover,
+.admin-glass-page .glass-tile:hover {
+  transform: translateY(-2px) scale(1.002);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+/* ── Glass buttons — glow + float ───────────────────────────── */
 
 .glass-btn-primary,
 .glass-btn-secondary,
 .glass-btn-danger {
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glass-btn-primary:hover {
-  box-shadow: 0 18px 40px rgba(45, 212, 191, 0.40);
-  transform: translateY(-1px);
+  box-shadow: 0 20px 44px rgba(45, 212, 191, 0.44);
+  transform: translateY(-2px);
 }
 .glass-btn-secondary:hover {
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 .glass-btn-primary:active,
 .glass-btn-secondary:active,
 .glass-btn-danger:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  transition: transform 0.1s ease;
 }
 
-/* ── Glass pills ────────────────────────────────────────────── */
+/* ── Glass pills — smooth state transition ──────────────────── */
 
 .glass-pill,
 .glass-segmented button {
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .glass-pill:hover,
 .glass-segmented button:hover {
@@ -316,17 +337,51 @@
 .glass-pill:active,
 .glass-segmented button:active {
   transform: scale(0.97);
+  transition: transform 0.08s ease;
 }
 
-/* ── Tool icon motion on parent hover ──────────────────────── */
+/* ── Tool icon motion — parent hover triggers zoom ──────────── */
 
 .tool-icon-motion {
-  transition: transform 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 a:hover .tool-icon-motion,
 button:hover .tool-icon-motion,
 .group:hover .tool-icon-motion {
-  transform: scale(1.08);
+  transform: scale(1.12);
+}
+
+/* ── Modal depth — backdrop recede, modal float in ──────────── */
+
+@keyframes modalBackdropIn {
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to   { opacity: 1; backdrop-filter: blur(8px); }
+}
+@keyframes modalFloatIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-backdrop {
+  animation: modalBackdropIn 0.3s ease-out both;
+}
+.modal-float {
+  animation: modalFloatIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Generating pulse — soft breathing glow ─────────────────── */
+
+@keyframes generatingPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.motion-generating {
+  animation: generatingPulse 2s ease-in-out infinite;
+}
+
+/* ── Sidebar items ──────────────────────────────────────────── */
+
+.glass-sidebar-item {
+  transition: all 0.18s ease;
 }
 
 /* ── Glass range slider ─────────────────────────────────────── */
@@ -359,43 +414,29 @@ button:hover .tool-icon-motion,
   cursor: pointer;
 }
 
-/* ── Sidebar items ──────────────────────────────────────────── */
-
-.glass-sidebar-item {
-  transition: all 0.18s ease;
-}
-
 /* ═══════════════════════════════════════════════════════════════
    Reduced motion — respect user preference
    ═══════════════════════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
   .motion-entry,
-  .motion-stagger > * {
+  .motion-stagger > *,
+  .modal-backdrop,
+  .modal-float,
+  .motion-generating {
     animation: none;
     opacity: 1;
   }
-  .glass-card,
-  .glass-panel,
-  .glass-tile,
-  .glass-btn-primary,
-  .glass-btn-secondary,
-  .glass-btn-danger,
-  .glass-pill,
-  .glass-segmented button,
-  .tool-icon-motion,
-  .glass-sidebar-item {
+  .glass-card, .glass-panel, .glass-tile,
+  .glass-btn-primary, .glass-btn-secondary, .glass-btn-danger,
+  .glass-pill, .glass-segmented button,
+  .tool-icon-motion, .glass-sidebar-item {
     transition: none;
   }
-  .glass-card:hover,
-  .glass-panel:hover,
-  .glass-tile:hover,
-  .glass-btn-primary:hover,
-  .glass-btn-secondary:hover,
-  .glass-pill:hover,
-  .glass-segmented button:hover,
-  a:hover .tool-icon-motion,
-  button:hover .tool-icon-motion,
+  .glass-card:hover, .glass-panel:hover, .glass-tile:hover,
+  .glass-btn-primary:hover, .glass-btn-secondary:hover,
+  .glass-pill:hover, .glass-segmented button:hover,
+  a:hover .tool-icon-motion, button:hover .tool-icon-motion,
   .group:hover .tool-icon-motion {
     transform: none;
   }

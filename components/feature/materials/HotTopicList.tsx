@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useModal } from "@/components/ui/modal";
 
 type Topic = {
   id: string;
@@ -21,6 +22,7 @@ const PLATFORMS = [
 ];
 
 export function HotTopicList() {
+  const modal = useModal();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -69,7 +71,7 @@ export function HotTopicList() {
       });
       const body = await res.json();
       if (!body.success) {
-        alert(body.error?.message ?? "导出失败");
+        await modal.open({ title: "导出失败", message: body.error?.message ?? "导出失败" });
         return;
       }
       const blob = new Blob(["﻿" + body.data.csv], { type: "text/csv;charset=utf-8" });
@@ -80,7 +82,7 @@ export function HotTopicList() {
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      alert("导出失败");
+      await modal.open({ title: "导出失败", message: "导出失败" });
     }
   }
 
