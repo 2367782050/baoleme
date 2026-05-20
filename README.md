@@ -107,6 +107,14 @@ AI_TIMEOUT_MS=30000
 npm run verify:ai
 ```
 
+如需验收浏览器端完整链路（页面点击、任务队列、数据库保存、列表刷新、截图）：
+
+```bash
+npm run verify:ai:e2e
+```
+
+该命令会调用真实 AI，并生成 `screenshots/prompts-ai-real.png` 与 `screenshots/writing-ai-real.png`。它不会加入默认 CI。
+
 未配置真实 AI 时会自动跳过，不影响 CI。
 
 ## 项目结构

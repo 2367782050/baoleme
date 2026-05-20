@@ -22,7 +22,8 @@
     "verify:unit": "node scripts/verify.mjs unit",
     "verify:e2e": "node scripts/verify.mjs e2e",
     "verify:all": "node scripts/verify.mjs all",
-    "verify:ai": "tsx scripts/verify-ai.ts"
+    "verify:ai": "tsx scripts/verify-ai.ts",
+    "verify:ai:e2e": "tsx scripts/verify-ai-e2e.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
