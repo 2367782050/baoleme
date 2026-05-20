@@ -2,7 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests",
-  testMatch: "browser*.spec.ts",
+  testMatch: /(browser.*|auth-navigation)\.spec\.ts/,
   timeout: 30000,
   use: {
     baseURL: "http://localhost:3000",

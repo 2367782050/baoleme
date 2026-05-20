@@ -66,7 +66,7 @@ export function ArticleList() {
           value={keyword}
           onChange={(e) => { setKeyword(e.target.value); setPage(1); }}
           placeholder="搜索文章标题..."
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm"
+          className="glass-input text-sm"
         />
       </div>
 
@@ -79,9 +79,9 @@ export function ArticleList() {
       {!loading && !error && articles.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {articles.map((a) => (
-            <div key={a.id} className="rounded-xl border border-zinc-200 p-4 hover:shadow-sm transition-shadow">
+            <div key={a.id} className="glass-card p-4">
               {a.coverUrl && (
-                <Image src={a.coverUrl} alt="" width={400} height={200} className="w-full h-32 object-cover rounded-lg mb-3" />
+                <Image src={a.coverUrl} alt="" width={400} height={200} className="w-full h-32 object-cover rounded-xl mb-3" />
               )}
               <h3 className="font-medium text-zinc-900 line-clamp-2">{a.title}</h3>
               {a.summary && (
@@ -115,7 +115,7 @@ export function ArticleList() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="px-3 py-1 rounded border border-zinc-200 disabled:opacity-30"
+              className="glass-pill px-4 py-1.5 text-xs disabled:opacity-30"
             >
               上一页
             </button>
@@ -123,7 +123,7 @@ export function ArticleList() {
             <button
               disabled={page >= Math.ceil(total / pageSize)}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1 rounded border border-zinc-200 disabled:opacity-30"
+              className="glass-pill px-4 py-1.5 text-xs disabled:opacity-30"
             >
               下一页
             </button>

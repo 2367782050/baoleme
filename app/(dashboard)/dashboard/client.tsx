@@ -1,105 +1,89 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 type DashboardData = {
-  user: {
-    username: string;
-    email: string;
-    role: string;
-  };
-  membership: {
-    planName: string;
-    planCode: string;
-    status: string;
-    expiresAt: string;
-  } | null;
+  user: { username: string; email: string; role: string };
+  membership: { planName: string; planCode: string; status: string; expiresAt: string } | null;
   quota: Record<string, { used: number; limit: number; remaining: number }>;
 };
 
+const TOOLS = [
+  { emoji: "✨", label: "智能创作", desc: "AI 生成高质量文章", href: "/writing", color: "from-teal-400 to-emerald-500" },
+  { emoji: "🔍", label: "爆款选题", desc: "发现全网热门内容", href: "/materials", color: "from-sky-400 to-sky-500" },
+  { emoji: "🔄", label: "文章改写", desc: "基于素材重新创作", href: "/writing", color: "from-violet-400 to-purple-500" },
+  { emoji: "📝", label: "标题生成", desc: "AI 生成爆款标题", href: "/prompts", color: "from-amber-400 to-orange-500" },
+  { emoji: "🔎", label: "素材搜索", desc: "搜索全网创作素材", href: "/materials", color: "from-rose-400 to-pink-500" },
+  { emoji: "🖼️", label: "图片工具", desc: "配图与封面生成", href: "/formatter", color: "from-green-400 to-green-500" },
+  { emoji: "🔥", label: "热点追踪", desc: "实时热点话题监控", href: "/materials", color: "from-red-400 to-red-500" },
+  { emoji: "📋", label: "创作模板", desc: "高分提示词模板库", href: "/prompts", color: "from-indigo-400 to-blue-500" },
+];
+
 export function DashboardClient({ data }: { data: DashboardData }) {
-  const router = useRouter();
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
-  }
-
-  const navCards = [
-    { title: "爆款素材", href: "/materials" },
-    { title: "提示词库", href: "/prompts" },
-    { title: "智能创作", href: "/writing" },
-    { title: "一键排版", href: "/formatter" },
-    { title: "公众号", href: "/official-accounts" },
-    { title: "会员中心", href: "/membership" },
-    { title: "推广中心", href: "/referral" },
-    ...(data.user.role === "admin" || data.user.role === "super_admin" ? [{ title: "后台运营", href: "/admin" }] : []),
-  ];
-
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12">
-      {/* User banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-8 border-b border-zinc-200">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900">
-            你好，{data.user.username}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500">
-            {data.membership ? (
-              <>
-                当前会员：<span className="font-medium text-zinc-700">{data.membership.planName}</span>
-                <span className="mx-1">·</span>
-                {data.membership.status === "active" ? "生效中" : data.membership.status}
-              </>
-            ) : (
-              "暂无有效会员"
-            )}
-          </p>
+    <div className="glass-page pt-6 pb-20 px-6">
+      <div className="mx-auto max-w-6xl">
+        {/* Welcome */}
+        <div className="mb-8">
+          <p className="text-sm text-zinc-400 mb-1">上午好 👋</p>
+          <h1 className="text-3xl font-bold text-zinc-900">你好，{data.user.username}</h1>
+          <p className="mt-1 text-zinc-500">今天灵感满满，继续创作出更多爆款内容吧！</p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="text-sm text-zinc-500 hover:text-zinc-700 transition-colors self-start"
-        >
-          退出登录
-        </button>
-      </div>
 
-      {/* Quota summary */}
-      <div className="mt-8">
-        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">
-          配额摘要
-        </h2>
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {Object.entries(data.quota).map(([key, val]) => (
-            <div
-              key={key}
-              className="rounded-lg border border-zinc-200 px-4 py-3"
-            >
-              <div className="text-xs text-zinc-400 truncate">{key}</div>
-              <div className="mt-1 text-lg font-semibold text-zinc-900">
-                {val.remaining}
-                <span className="text-xs text-zinc-400 font-normal">/{val.limit}</span>
+        {/* Hero card */}
+        <div className="glass-card p-8 mb-8">
+          <div className="flex flex-col lg:flex-row items-center gap-8">
+            <div className="flex-1">
+              <h2 className="text-xl font-bold text-zinc-900">欢迎使用 爆了么</h2>
+              <p className="mt-2 text-zinc-500 max-w-md">AI 助力创作，让内容更容易爆。选素材、定提示词、生成文章、排版发布，全流程一站完成。</p>
+              <div className="flex gap-3 mt-5">
+                <Link href="/writing" className="glass-btn-primary">开始创作</Link>
+                <Link href="/materials" className="glass-btn-secondary">浏览素材</Link>
               </div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-300/60 to-sky-400/40" />
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-300/60 to-emerald-400/40 mt-8" />
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-300/60 to-purple-400/40" />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: "内容创作", value: "12", sub: "篇", color: "text-teal-600" },
+            { label: "爆款产出", value: "5", sub: "篇 10w+", color: "text-orange-600" },
+            { label: "阅读量", value: "128K", sub: "总阅读", color: "text-sky-600" },
+            { label: "转化点击", value: "8.2K", sub: "总点击", color: "text-violet-600" },
+          ].map(({ label, value, sub, color }) => (
+            <div key={label} className="glass-tile p-4">
+              <p className="text-xs text-zinc-400 mb-1">{label}</p>
+              <p className={`text-2xl font-bold ${color}`}>{value}<span className="text-xs text-zinc-400 font-normal ml-1">{sub}</span></p>
             </div>
           ))}
         </div>
-      </div>
 
-      {/* Feature nav */}
-      <div className="mt-10">
-        <h2 className="text-sm font-semibold text-zinc-500 uppercase tracking-wider">
-          功能入口
-        </h2>
-        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {navCards.map(({ title, href }) => (
-            <Link
-              key={title}
-              href={href}
-              className="block rounded-xl border border-zinc-200 p-6 hover:border-zinc-300 hover:shadow-sm transition-all"
-            >
-              <h3 className="font-semibold text-zinc-900">{title}</h3>
-              <p className="mt-1 text-sm text-zinc-400">功能开发中</p>
+        {/* Quota */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+          {Object.entries(data.quota).map(([k, v]) => (
+            <div key={k} className="glass-tile px-3 py-2.5">
+              <p className="text-[11px] text-zinc-400 truncate">{k}</p>
+              <p className="text-lg font-bold text-zinc-800">{v.remaining}<span className="text-xs text-zinc-400 font-normal">/{v.limit}</span></p>
+            </div>
+          ))}
+        </div>
+
+        {/* Tool grid */}
+        <h2 className="text-lg font-semibold text-zinc-900 mb-4">创作工具</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {TOOLS.map(({ emoji, label, desc, href, color }) => (
+            <Link key={label} href={href} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_20px_50px_rgba(15,23,42,0.10)] transition-shadow">
+              <span className={`glass-icon-tile bg-gradient-to-br ${color} text-white`}>{emoji}</span>
+              <div>
+                <h3 className="font-semibold text-zinc-900 text-sm group-hover:text-teal-700 transition-colors">{label}</h3>
+                <p className="mt-0.5 text-xs text-zinc-400">{desc}</p>
+              </div>
             </Link>
           ))}
         </div>

@@ -38,32 +38,31 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <div>
       <h3 className="font-semibold text-zinc-900 mb-4">新建创作</h3>
-      {error && <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
-      {jobId && <div className="mb-4 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-600">任务状态: {status}</div>}
+      {error && <div className="mb-4 rounded-2xl bg-red-50/70 backdrop-blur px-4 py-3 text-sm text-red-600">{error}</div>}
+      {jobId && <div className="mb-4 rounded-2xl bg-blue-50/70 backdrop-blur px-4 py-3 text-sm text-blue-600">任务状态: {status}</div>}
       {!jobId && (
         <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="sm:col-span-2"><label className="block text-sm font-medium text-zinc-700">标题</label>
-            <input required value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" /></div>
-          <div><label className="block text-sm font-medium text-zinc-700">分组</label>
-            <select value={form.groupId} onChange={e => setForm(f => ({ ...f, groupId: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+          <div className="sm:col-span-2"><label className="block text-sm font-medium text-zinc-700 mb-1">创作主题</label>
+            <input required value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className="w-full glass-input text-sm" placeholder="输入您想创作的主题..." /></div>
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">分组</label>
+            <select value={form.groupId} onChange={e => setForm(f => ({ ...f, groupId: e.target.value }))} className="w-full glass-input text-sm">
               <option value="">无分组</option>{groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select></div>
-          <div><label className="block text-sm font-medium text-zinc-700">提示词</label>
-            <select value={form.promptId} onChange={e => setForm(f => ({ ...f, promptId: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">提示词</label>
+            <select value={form.promptId} onChange={e => setForm(f => ({ ...f, promptId: e.target.value }))} className="w-full glass-input text-sm">
               <option value="">无提示词</option>{prompts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div><label className="block text-sm font-medium text-zinc-700">来源 URL</label>
-            <input value={form.sourceUrl} onChange={e => setForm(f => ({ ...f, sourceUrl: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" /></div>
-          <div><label className="block text-sm font-medium text-zinc-700">参考 URL（每行一个）</label>
-            <textarea value={form.referenceUrls} onChange={e => setForm(f => ({ ...f, referenceUrls: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" rows={2} /></div>
-          <div className="sm:col-span-2"><label className="block text-sm font-medium text-zinc-700">文本素材</label>
-            <textarea value={form.materialText} onChange={e => setForm(f => ({ ...f, materialText: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" rows={3} /></div>
-          <div><label className="block text-sm font-medium text-zinc-700">图片数量</label>
-            <input type="number" value={form.imageCount} onChange={e => setForm(f => ({ ...f, imageCount: Number(e.target.value) }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm" /></div>
-          <div><label className="block text-sm font-medium text-zinc-700">图片策略</label>
-            <select value={form.imageStrategy} onChange={e => setForm(f => ({ ...f, imageStrategy: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">来源 URL</label>
+            <input value={form.sourceUrl} onChange={e => setForm(f => ({ ...f, sourceUrl: e.target.value }))} className="w-full glass-input text-sm" /></div>
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">参考 URL（每行一个）</label>
+            <textarea value={form.referenceUrls} onChange={e => setForm(f => ({ ...f, referenceUrls: e.target.value }))} className="w-full glass-input text-sm" rows={2} /></div>
+          <div className="sm:col-span-2"><label className="block text-sm font-medium text-zinc-700 mb-1">文本素材</label>
+            <textarea value={form.materialText} onChange={e => setForm(f => ({ ...f, materialText: e.target.value }))} className="w-full glass-input text-sm" rows={3} placeholder="粘贴或输入参考文本素材..." /></div>
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">图片数量</label>
+            <input type="number" value={form.imageCount} onChange={e => setForm(f => ({ ...f, imageCount: Number(e.target.value) }))} className="w-full glass-input text-sm" /></div>
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">图片策略</label>
+            <select value={form.imageStrategy} onChange={e => setForm(f => ({ ...f, imageStrategy: e.target.value }))} className="w-full glass-input text-sm">
               <option value="none">不使用</option><option value="relevant_collection">相关配图</option></select></div>
           <div className="sm:col-span-2">
-            <button type="submit" disabled={loading} className="rounded-lg bg-zinc-900 px-6 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50">{loading ? "提交中..." : "开始生成"}</button>
-          </div>
+            <button type="submit" disabled={loading} className="glass-btn-primary">{loading ? "提交中..." : "开始创作"}</button></div>
         </form>
       )}
     </div>

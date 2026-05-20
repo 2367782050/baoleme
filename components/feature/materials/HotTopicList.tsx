@@ -93,18 +93,14 @@ export function HotTopicList() {
           <button
             key={p.value}
             onClick={() => { setPlatform(p.value); setPage(1); }}
-            className={`text-sm px-3 py-1 rounded-full border transition-colors ${
-              (platform || "") === p.value
-                ? "bg-zinc-900 text-white border-zinc-900"
-                : "border-zinc-300 text-zinc-600 hover:bg-zinc-50"
-            }`}
+            className={`glass-pill px-4 py-1.5 text-sm ${(platform || "") === p.value ? "bg-teal-500/90 text-white border-teal-400/50" : "text-zinc-600 hover:text-zinc-900"}`}
           >
             {p.label}
           </button>
         ))}
         <button
           onClick={handleExport}
-          className="text-sm px-3 py-1 rounded border border-zinc-300 text-zinc-600 hover:bg-zinc-50 ml-auto"
+          className="glass-pill px-4 py-1.5 text-sm text-zinc-600 hover:text-zinc-900 ml-auto"
         >
           导出 CSV
         </button>
@@ -122,7 +118,7 @@ export function HotTopicList() {
             {topics.map((t) => (
               <div
                 key={t.id}
-                className="flex items-center gap-4 rounded-lg border border-zinc-100 px-4 py-3 hover:bg-zinc-50"
+                className="glass-card flex items-center gap-4 px-4 py-3"
               >
                 <span className={`text-lg font-bold w-8 ${
                   t.rank <= 3 ? "text-red-500" : "text-zinc-400"
@@ -156,7 +152,7 @@ export function HotTopicList() {
                 <button
                   disabled={page <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  className="px-3 py-1 rounded border border-zinc-200 disabled:opacity-30"
+                  className="glass-pill px-4 py-1.5 text-xs disabled:opacity-30"
                 >
                   上一页
                 </button>
@@ -164,7 +160,7 @@ export function HotTopicList() {
                 <button
                   disabled={page >= Math.ceil(total / pageSize)}
                   onClick={() => setPage((p) => p + 1)}
-                  className="px-3 py-1 rounded border border-zinc-200 disabled:opacity-30"
+                  className="glass-pill px-4 py-1.5 text-xs disabled:opacity-30"
                 >
                   下一页
                 </button>

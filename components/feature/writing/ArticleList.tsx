@@ -35,37 +35,35 @@ export function ArticleList({
     await fetch(`/api/articles/${id}`, { method: "DELETE", credentials: "include" }); onRefresh();
   }
 
-  const statuses = ["", "generating", "completed", "failed", "not_pushed", "pushed"];
-  const labels: Record<string, string> = { "": "全部", "generating": "生成中", "completed": "已生成", "failed": "生成失败", "not_pushed": "未推送", "pushed": "已推送" };
+  const statuses = ["", "generating", "completed", "failed"];
+  const labels: Record<string, string> = { "": "全部", "generating": "创作中", "completed": "已完成", "failed": "失败" };
 
   return (
     <div>
-      <div className="flex flex-wrap gap-3 mb-4 items-center">
+      <div className="flex flex-wrap gap-2 mb-4 items-center">
         {statuses.map(s => (
           <button key={s} onClick={() => { onStatusChange(s); setPage(1); }}
-            className={`text-xs px-3 py-1 rounded-full border ${statusFilter === s ? "bg-zinc-900 text-white border-zinc-900" : "border-zinc-300 text-zinc-600 hover:bg-zinc-50"}`}>{labels[s]}</button>
+            className={`glass-pill text-xs ${statusFilter === s ? "glass-pill-active" : ""}`}>{labels[s]}</button>
         ))}
         <select value={groupId} onChange={e => { onGroupChange(e.target.value); setPage(1); }}
-          className="text-xs border border-zinc-300 rounded px-2 py-1">
-          <option value="">全部分组</option>
-          {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-        </select>
+          className="glass-input !py-1.5 !text-xs !px-3 !rounded-full">
+          <option value="">全部分组</option>{groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
         <input type="text" value={keyword} onChange={e => { setKeyword(e.target.value); setPage(1); }}
-          placeholder="搜索..." className="text-xs border border-zinc-300 rounded px-2 py-1" />
+          placeholder="搜索..." className="glass-input !py-1.5 !text-xs !px-3 !rounded-full" />
       </div>
 
       {loading && <p className="text-sm text-zinc-400 py-8">加载中...</p>}
       {!loading && articles.length === 0 && <p className="text-sm text-zinc-400 py-8">暂无文章</p>}
 
-      {!loading && articles.length > 0 && <div className="space-y-3">
+      {!loading && articles.length > 0 && <div className="space-y-2.5">
         {articles.map(a => (
-          <div key={a.id} data-testid={`article-row-${a.id}`} className="rounded-xl border border-zinc-200 p-4 flex items-center justify-between gap-4">
+          <div key={a.id} data-testid={`article-row-${a.id}`} className="glass-tile p-4 flex items-center justify-between gap-4">
             <div className="min-w-0">
               <h3 className="font-medium text-zinc-900 truncate">{a.title || "未命名文章"}</h3>
               <p className="text-xs text-zinc-400 mt-0.5">{a.group?.name ?? "未分组"} · {a.prompt?.name ?? "无提示词"} · {new Date(a.updatedAt).toLocaleDateString()}</p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <span data-testid={`article-status-${a.id}`} className={`text-xs px-2 py-0.5 rounded ${a.status === "completed" ? "bg-green-50 text-green-600" : a.status === "failed" ? "bg-red-50 text-red-600" : a.status === "generating" ? "bg-blue-50 text-blue-600" : "bg-zinc-100 text-zinc-500"}`}>{labels[a.status] ?? a.status}</span>
+              <span data-testid={`article-status-${a.id}`} className={a.status === "completed" ? "badge-ok" : a.status === "failed" ? "badge-err" : a.status === "generating" ? "badge-info" : "badge-muted"}>{labels[a.status] ?? a.status}</span>
               <Link href={`/formatter?articleId=${a.id}`} className="text-xs text-zinc-400 hover:text-zinc-600">排版</Link>
               <button onClick={() => handleDelete(a.id)} className="text-xs text-red-400 hover:text-red-600">删除</button>
             </div>
@@ -76,9 +74,9 @@ export function ArticleList({
       {total > 20 && <div className="flex items-center justify-between mt-4 text-sm text-zinc-500">
         <span>共 {total} 条</span>
         <div className="flex gap-2">
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1 rounded border border-zinc-200 disabled:opacity-30">上一页</button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="glass-pill text-xs disabled:opacity-30">上一页</button>
           <span className="px-3 py-1">{page} / {Math.ceil(total / 20)}</span>
-          <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)} className="px-3 py-1 rounded border border-zinc-200 disabled:opacity-30">下一页</button>
+          <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(p => p + 1)} className="glass-pill text-xs disabled:opacity-30">下一页</button>
         </div>
       </div>}
     </div>
