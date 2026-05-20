@@ -82,7 +82,9 @@ jobs:
         run: npx tsx scripts/console-check.ts
 
       - name: Playwright E2E
-        run: PLAYWRIGHT_REUSE_SERVER=1 npm run verify:e2e
+        env:
+          PLAYWRIGHT_REUSE_SERVER: "1"
+        run: npx playwright test tests/browser*.spec.ts --workers=1
 
       - name: Screenshots
         run: npx tsx scripts/screenshots.ts
