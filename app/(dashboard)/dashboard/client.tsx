@@ -26,7 +26,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
       <div className="mx-auto max-w-6xl">
         {/* Welcome */}
         <div className="mb-8">
-          <p className="text-sm text-zinc-400 mb-1">上午好 👋</p>
+          <p className="text-sm text-zinc-400 mb-1">上午好</p>
           <h1 className="text-3xl font-bold text-zinc-900">你好，{data.user.username}</h1>
           <p className="mt-1 text-zinc-500">今天灵感满满，继续创作出更多爆款内容吧！</p>
         </div>
@@ -80,7 +80,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {TOOLS.map(({ icon, label, desc, href }) => (
             <Link key={label} href={href} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_20px_50px_rgba(15,23,42,0.10)] transition-shadow">
-              <Image src={icon} alt={label} width={44} height={44} className="shrink-0" />
+              <Image src={icon} alt={label} width={56} height={56} className="shrink-0" />
               <div>
                 <h3 className="font-semibold text-zinc-900 text-sm group-hover:text-teal-700 transition-colors">{label}</h3>
                 <p className="mt-0.5 text-xs text-zinc-400">{desc}</p>

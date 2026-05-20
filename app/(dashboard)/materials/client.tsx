@@ -89,7 +89,7 @@ export function MaterialsClient() {
               className="glass-input glass-input-lg w-full !pr-28"
             />
             <button type="submit" className="absolute right-2 top-1/2 -translate-y-1/2 glass-btn-primary !text-sm !py-2 !px-5">
-              🔍 搜索
+              搜索
             </button>
           </div>
         </form>
@@ -182,7 +182,7 @@ export function MaterialsClient() {
                       <div key={t.id} className="flex items-center gap-2 text-sm">
                         <span className={`text-xs font-bold w-5 ${t.rank <= 3 ? "text-red-500" : "text-zinc-400"}`}>{t.rank}</span>
                         <span className="text-zinc-700 truncate flex-1">{t.title}</span>
-                        <span className="text-xs text-zinc-400 shrink-0">🔥 {String(t.heatScore)}</span>
+                        <span className="text-xs text-zinc-400 shrink-0">{String(t.heatScore)}</span>
                       </div>
                     ))}
                   </div>

@@ -47,7 +47,7 @@ export function AdminClient() {
               {SIDEBAR_ITEMS.map(t => (
                 <button key={t} onClick={()=>openTab(t)}
                   className={`glass-sidebar-item w-full ${tab===t?"active":""}`}>
-                  <Image src={SIDEBAR_ICONS[t]} alt={t} width={24} height={24} className="shrink-0" /> {t}
+                  <Image src={SIDEBAR_ICONS[t]} alt={t} width={32} height={32} className="shrink-0" /> {t}
                 </button>
               ))}
             </nav>

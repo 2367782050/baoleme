@@ -44,7 +44,7 @@ export function WritingClient() {
               {/* Inspiration card */}
               <div className="mt-6 p-3 rounded-2xl bg-gradient-to-br from-violet-400/10 to-sky-400/10">
                 <p className="text-xs text-zinc-500 leading-relaxed">
-                  💡 <span className="font-medium text-zinc-700">创作灵感</span><br />
+                  <span className="font-medium text-zinc-700">创作灵感</span><br />
                   好的标题是爆款的一半，试试用数字型或疑问型标题结构。
                 </p>
               </div>
