@@ -595,6 +595,14 @@ button:hover .tool-icon-motion,
   pointer-events: none;
 }
 
+/* ── Staged fade-out during mode switch ────────────────────── */
+
+.auth-center-page.auth-switching-out .auth-form-card.forward {
+  opacity: 0;
+  pointer-events: none;
+  /* keep visibility: visible so CSS transition can play */
+}
+
 .auth-card-inner {
   min-height: 430px;
   box-shadow:
