@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 type DashboardData = {
   user: { username: string; email: string; role: string };
@@ -9,14 +10,14 @@ type DashboardData = {
 };
 
 const TOOLS = [
-  { emoji: "✨", label: "智能创作", desc: "AI 生成高质量文章", href: "/writing", color: "from-teal-400 to-emerald-500" },
-  { emoji: "🔍", label: "爆款选题", desc: "发现全网热门内容", href: "/materials", color: "from-sky-400 to-sky-500" },
-  { emoji: "🔄", label: "文章改写", desc: "基于素材重新创作", href: "/writing", color: "from-violet-400 to-purple-500" },
-  { emoji: "📝", label: "标题生成", desc: "AI 生成爆款标题", href: "/prompts", color: "from-amber-400 to-orange-500" },
-  { emoji: "🔎", label: "素材搜索", desc: "搜索全网创作素材", href: "/materials", color: "from-rose-400 to-pink-500" },
-  { emoji: "🖼️", label: "图片工具", desc: "配图与封面生成", href: "/formatter", color: "from-green-400 to-green-500" },
-  { emoji: "🔥", label: "热点追踪", desc: "实时热点话题监控", href: "/materials", color: "from-red-400 to-red-500" },
-  { emoji: "📋", label: "创作模板", desc: "高分提示词模板库", href: "/prompts", color: "from-indigo-400 to-blue-500" },
+  { icon: "/ui-assets/tool-ai-writing.png", label: "智能创作", desc: "AI 生成高质量文章", href: "/writing" },
+  { icon: "/ui-assets/tool-viral-topic.png", label: "爆款选题", desc: "发现全网热门内容", href: "/materials" },
+  { icon: "/ui-assets/tool-rewrite.png", label: "文章改写", desc: "基于素材重新创作", href: "/writing" },
+  { icon: "/ui-assets/tool-title.png", label: "标题生成", desc: "AI 生成爆款标题", href: "/prompts" },
+  { icon: "/ui-assets/tool-material-search.png", label: "素材搜索", desc: "搜索全网创作素材", href: "/materials" },
+  { icon: "/ui-assets/tool-image-tool.png", label: "图片工具", desc: "配图与封面生成", href: "/formatter" },
+  { icon: "/ui-assets/tool-hot-trend.png", label: "热点追踪", desc: "实时热点话题监控", href: "/materials" },
+  { icon: "/ui-assets/tool-template.png", label: "创作模板", desc: "高分提示词模板库", href: "/prompts" },
 ];
 
 export function DashboardClient({ data }: { data: DashboardData }) {
@@ -77,9 +78,9 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         {/* Tool grid */}
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">创作工具</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {TOOLS.map(({ emoji, label, desc, href, color }) => (
+          {TOOLS.map(({ icon, label, desc, href }) => (
             <Link key={label} href={href} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_20px_50px_rgba(15,23,42,0.10)] transition-shadow">
-              <span className={`glass-icon-tile bg-gradient-to-br ${color} text-white`}>{emoji}</span>
+              <Image src={icon} alt={label} width={44} height={44} className="shrink-0" />
               <div>
                 <h3 className="font-semibold text-zinc-900 text-sm group-hover:text-teal-700 transition-colors">{label}</h3>
                 <p className="mt-0.5 text-xs text-zinc-400">{desc}</p>

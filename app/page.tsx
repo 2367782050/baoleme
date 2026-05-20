@@ -1,12 +1,13 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const FEATURES = [
-  { emoji: "🔍", label: "爆款素材", desc: "发现全网高质量爆款内容", color: "from-sky-400 to-sky-500" },
-  { emoji: "📝", label: "提示词库", desc: "AI 生成和管理高分提示词", color: "from-violet-400 to-violet-500" },
-  { emoji: "✨", label: "智能创作", desc: "AI 辅助生成高质量文章", color: "from-teal-400 to-emerald-500" },
-  { emoji: "🎨", label: "一键排版", desc: "Markdown 转公众号 HTML", color: "from-amber-400 to-orange-500" },
-  { emoji: "📱", label: "公众号管理", desc: "管理授权与草稿推送", color: "from-green-400 to-green-500" },
-  { emoji: "💎", label: "会员推广", desc: "灵活套餐与推广返佣", color: "from-pink-400 to-rose-500" },
+  { icon: "/ui-assets/tool-viral-topic.png", label: "爆款素材", desc: "发现全网高质量爆款内容" },
+  { icon: "/ui-assets/tool-template.png", label: "提示词库", desc: "AI 生成和管理高分提示词" },
+  { icon: "/ui-assets/tool-ai-writing.png", label: "智能创作", desc: "AI 辅助生成高质量文章" },
+  { icon: "/ui-assets/tool-image-tool.png", label: "一键排版", desc: "Markdown 转公众号 HTML" },
+  { icon: "/ui-assets/admin-overview.png", label: "公众号管理", desc: "管理授权与草稿推送" },
+  { icon: "/ui-assets/admin-membership.png", label: "会员推广", desc: "灵活套餐与推广返佣" },
 ];
 
 export default function Home() {
@@ -57,9 +58,9 @@ export default function Home() {
 
         {/* Feature grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {FEATURES.map(({ emoji, label, desc, color }) => (
+          {FEATURES.map(({ icon, label, desc }) => (
             <Link key={label} href={label === "爆款素材" ? "/materials" : label === "提示词库" ? "/prompts" : label === "智能创作" ? "/writing" : label === "一键排版" ? "/formatter" : label === "公众号管理" ? "/official-accounts" : "/membership"} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_20px_50px_rgba(15,23,42,0.10)] transition-shadow">
-              <span className={`glass-icon-tile bg-gradient-to-br ${color} text-white text-lg`}>{emoji}</span>
+              <Image src={icon} alt={label} width={44} height={44} className="shrink-0" />
               <div>
                 <h3 className="font-semibold text-zinc-900 group-hover:text-teal-700 transition-colors">{label}</h3>
                 <p className="mt-1 text-sm text-zinc-400">{desc}</p>

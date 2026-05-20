@@ -1,12 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 const SIDEBAR_ITEMS = ["概览","用户管理","会员管理","订单管理","提现审核","AI 任务"] as const;
 type Tab = (typeof SIDEBAR_ITEMS)[number];
 
 const SIDEBAR_ICONS: Record<Tab, string> = {
-  "概览": "📊", "用户管理": "👤", "会员管理": "💎", "订单管理": "📋", "提现审核": "💰", "AI 任务": "🤖",
+  "概览": "/ui-assets/admin-overview.png",
+  "用户管理": "/ui-assets/admin-users.png",
+  "会员管理": "/ui-assets/admin-membership.png",
+  "订单管理": "/ui-assets/admin-orders.png",
+  "提现审核": "/ui-assets/admin-withdrawals.png",
+  "AI 任务": "/ui-assets/admin-ai-jobs.png",
 };
 
 export function AdminClient() {
@@ -41,7 +47,7 @@ export function AdminClient() {
               {SIDEBAR_ITEMS.map(t => (
                 <button key={t} onClick={()=>openTab(t)}
                   className={`glass-sidebar-item w-full ${tab===t?"active":""}`}>
-                  <span className="text-base">{SIDEBAR_ICONS[t]}</span> {t}
+                  <Image src={SIDEBAR_ICONS[t]} alt={t} width={24} height={24} className="shrink-0" /> {t}
                 </button>
               ))}
             </nav>
