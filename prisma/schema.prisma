@@ -280,6 +280,10 @@ model PromptGenerationJob {
   input          Json     @db.JsonB
   outputPromptId String?  @map("output_prompt_id") @db.Uuid
   errorMessage   String?  @map("error_message") @db.Text
+  attempts       Int      @default(0) @map("attempts")
+  maxAttempts    Int      @default(3) @map("max_attempts")
+  startedAt      DateTime? @map("started_at") @db.Timestamptz()
+  completedAt    DateTime? @map("completed_at") @db.Timestamptz()
   tokenUsage     Json?    @map("token_usage") @db.JsonB
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
@@ -340,6 +344,7 @@ model ArticleGenerationJob {
   input         Json      @db.JsonB
   errorMessage  String?   @map("error_message") @db.Text
   attempts      Int       @default(0)
+  maxAttempts   Int       @default(3) @map("max_attempts")
   startedAt     DateTime? @map("started_at") @db.Timestamptz()
   completedAt   DateTime? @map("completed_at") @db.Timestamptz()
   tokenUsage    Json?     @map("token_usage") @db.JsonB

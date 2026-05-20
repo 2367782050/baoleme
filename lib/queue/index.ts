@@ -1,3 +1,2 @@
-export { enqueuePromptGeneration } from "./prompt-queue";
-export type { PromptJobMessage } from "./prompt-queue";
-export { enqueueArticleGeneration } from "./article-queue";
+export { enqueuePromptGeneration, executeJobInline as executePromptJobInline } from "./prompt-queue";
+export { enqueueArticleGeneration, executeArticleJobInline } from "./article-queue";
