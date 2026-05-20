@@ -25,7 +25,7 @@ export function OAClient() {
   async function handleDelete(id: string) { if (!(await modal.open({ title: "删除公众号", message: "确定删除这个公众号？", confirmLabel: "删除", variant: "danger" }))) return; await fetch(`/api/official-accounts?id=${id}`, { method: "DELETE" }); setRefresh(k => k + 1); }
 
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         <h1 className="text-2xl font-bold text-zinc-900 mb-2">公众号管理</h1>
 

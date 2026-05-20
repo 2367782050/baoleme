@@ -11,7 +11,7 @@ export function WritingClient() {
   const [groupId, setGroupId] = useState("");
 
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -54,7 +54,7 @@ export function WritingClient() {
           {/* Center: Create form or article list */}
           <div className="flex-1 min-w-0">
             {showCreate && (
-              <div className="glass-card p-6 mb-6">
+              <div className="glass-card p-6 mb-6 depth-drawer">
                 <CreateForm onSuccess={() => { setRefreshKey(k => k + 1); setShowCreate(false); }} />
               </div>
             )}

@@ -30,7 +30,7 @@ const FLOW_STEPS = [
 
 export function DashboardClient({ data }: { data: DashboardData }) {
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         {/* Welcome — compact */}
         <div className="mb-6">

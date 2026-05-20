@@ -18,7 +18,7 @@ const HERO_CARDS = [
 
 export default function Home() {
   return (
-    <div className="glass-page">
+    <div className="glass-page depth-page">
       <div className="mx-auto max-w-6xl px-6 pt-28 pb-20">
         {/* Hero */}
         <div className="flex flex-col lg:flex-row items-center gap-12 mb-16">

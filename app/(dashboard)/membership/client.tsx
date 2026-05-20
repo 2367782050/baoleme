@@ -24,7 +24,7 @@ export function MembershipClient({ current, plans, quota }: { current: { members
   async function handleBuy(planId: string) { const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ planId }) }); const b = await r.json(); if (b.success) { await modal.open({ title: "下单成功", message: "订单已创建，请模拟支付" }); refreshOrders(); } else await modal.open({ title: "下单失败", message: b.error?.message ?? "创建失败" }); }
 
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         <h1 className="text-2xl font-bold text-zinc-900 mb-8">会员中心</h1>
 

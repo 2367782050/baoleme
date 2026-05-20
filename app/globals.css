@@ -237,7 +237,7 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   Phase 17 — Spatial Depth Motion System
+   Phase 18 — Spatial Depth Interactive Motion System
    Pure CSS. No Framer Motion, no GSAP.
    ═══════════════════════════════════════════════════════════════ */
 
@@ -249,6 +249,9 @@
 }
 .motion-entry {
   animation: floatUpIn 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.depth-page {
+  animation: floatUpIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* ── Staggered children ─────────────────────────────────────── */
@@ -267,6 +270,29 @@
 .motion-stagger > *:nth-child(8) { animation-delay: 0.48s; }
 .motion-stagger > *:nth-child(9) { animation-delay: 0.54s; }
 .motion-stagger > *:nth-child(10){ animation-delay: 0.60s; }
+
+.depth-stage > * {
+  opacity: 0;
+  animation: floatUpIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.depth-stage > *:nth-child(1) { animation-delay: 0.06s; }
+.depth-stage > *:nth-child(2) { animation-delay: 0.12s; }
+.depth-stage > *:nth-child(3) { animation-delay: 0.18s; }
+.depth-stage > *:nth-child(4) { animation-delay: 0.24s; }
+.depth-stage > *:nth-child(5) { animation-delay: 0.30s; }
+.depth-stage > *:nth-child(6) { animation-delay: 0.36s; }
+.depth-stage > *:nth-child(7) { animation-delay: 0.42s; }
+.depth-stage > *:nth-child(8) { animation-delay: 0.48s; }
+.depth-stage > *:nth-child(9) { animation-delay: 0.54s; }
+.depth-stage > *:nth-child(10){ animation-delay: 0.60s; }
+
+/* Admin — minimal motion */
+.admin-glass-page.depth-page {
+  animation: floatUpIn 0.3s ease-out both;
+}
+.admin-glass-page .depth-stage > * {
+  animation-duration: 0.25s;
+}
 
 /* ── Spatial float-forward on hover ─────────────────────────── */
 
@@ -351,14 +377,34 @@ button:hover .tool-icon-motion,
   transform: scale(1.12);
 }
 
-/* ── Modal depth — backdrop recede, modal float in ──────────── */
+/* ── Tab content — slide transition ────────────────────────── */
+
+@keyframes tabSlideIn {
+  from { opacity: 0; transform: translateX(12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.depth-tab-content {
+  animation: tabSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Drawer — expand from below ────────────────────────────── */
+
+@keyframes drawerExpandIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.depth-drawer {
+  animation: drawerExpandIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Modal depth — backdrop recede, content push back ──────── */
 
 @keyframes modalBackdropIn {
   from { opacity: 0; backdrop-filter: blur(0px); }
   to   { opacity: 1; backdrop-filter: blur(8px); }
 }
 @keyframes modalFloatIn {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  from { opacity: 0; transform: translateY(24px) scale(0.94); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 .modal-backdrop {
@@ -366,6 +412,41 @@ button:hover .tool-icon-motion,
 }
 .modal-float {
   animation: modalFloatIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.depth-modal-backdrop {
+  animation: modalBackdropIn 0.3s ease-out both;
+}
+.depth-modal {
+  animation: modalFloatIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Task shimmer — subtle scan line ───────────────────────── */
+
+@keyframes taskShimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.motion-task {
+  position: relative; overflow: hidden;
+}
+.motion-task::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 40%, rgba(56,189,248,0.06) 50%, transparent 60%);
+  background-size: 200% 100%;
+  animation: taskShimmer 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ── Success flash — brief highlight ────────────────────────── */
+
+@keyframes successFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+  50%  { box-shadow: 0 0 0 8px rgba(16,185,129,0.18); }
+  100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+}
+.motion-success {
+  animation: successFlash 0.8s ease-out;
 }
 
 /* ── Generating pulse — soft breathing glow ─────────────────── */
@@ -419,11 +500,17 @@ button:hover .tool-icon-motion,
    ═══════════════════════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
-  .motion-entry,
-  .motion-stagger > *,
+  .depth-page,
+  .depth-stage > *,
+  .depth-tab-content,
+  .depth-drawer,
+  .depth-modal-backdrop,
+  .depth-modal,
   .modal-backdrop,
   .modal-float,
-  .motion-generating {
+  .motion-generating,
+  .motion-task::after,
+  .motion-success {
     animation: none;
     opacity: 1;
   }

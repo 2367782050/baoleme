@@ -25,7 +25,7 @@ export function PromptsClient() {
   }, [refreshKey]);
 
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -38,7 +38,7 @@ export function PromptsClient() {
         </div>
 
         {showGenerate && (
-          <div className="glass-card p-6 mb-6">
+          <div className="glass-card p-6 mb-6 depth-drawer">
             <GenerateForm
               groups={groups}
               onSuccess={() => { setRefreshKey(k => k + 1); setShowGenerate(false); }}

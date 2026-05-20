@@ -31,7 +31,7 @@ export default function LoginPage() {
   if (checking) return <div className="glass-page flex min-h-screen items-center justify-center"><p className="text-sm text-zinc-400">加载中...</p></div>;
 
   return (
-    <div className="glass-page flex min-h-screen items-center justify-center px-6">
+    <div className="glass-page depth-page flex min-h-screen items-center justify-center px-6">
       <div className="glass-card p-8 w-full max-w-sm">
         <h1 className="text-2xl font-bold text-zinc-900 text-center">登录</h1>
         <p className="mt-2 text-sm text-zinc-500 text-center">登录你的爆了么账号</p>

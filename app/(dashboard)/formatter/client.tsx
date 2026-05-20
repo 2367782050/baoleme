@@ -54,10 +54,10 @@ export function FormatterClient() {
   async function handleSave() { if (!articleId) { setError("没有文章 ID，无法保存"); return; } setSaving(true); setError(""); try { const r = await fetch(`/api/articles/${articleId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, markdownContent: markdown, htmlContent: html, formatterConfig: config }) }); const b = await r.json(); if (!b.success) { setError(b.error?.message ?? "保存失败"); return; } } catch { setError("网络错误"); } finally { setSaving(false); } }
   async function handleCopy() { try { await navigator.clipboard.writeText(html); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setError("复制失败，请手动复制排版代码"); } }
 
-  if (loading) return <div className="glass-page pt-12 px-6"><div className="mx-auto max-w-6xl text-sm text-zinc-400">加载中...</div></div>;
+  if (loading) return <div className="glass-page depth-page pt-12 px-6"><div className="mx-auto max-w-6xl text-sm text-zinc-400">加载中...</div></div>;
 
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         {/* Toolbar */}
         <div className="glass-card p-4 mb-6 flex flex-wrap items-center gap-3">

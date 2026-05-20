@@ -22,7 +22,7 @@ export function ReferralClient() {
   async function handleWithdraw(e: React.FormEvent) { e.preventDefault(); setMsg(""); const r = await fetch("/api/referral/withdrawals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(wForm) }); const b = await r.json(); setMsg(b.success ? "提现申请已提交" : (b.error?.message ?? "失败")); if (b.success) { setWForm({ amountCents: 0, alipayName: "", alipayAccount: "" }); fetch("/api/referral/withdrawals").then(r => r.json()).then(b => { if (b.success) setWithdrawals(b.data); }); } }
 
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         <h1 className="text-2xl font-bold text-zinc-900 mb-8">推广中心</h1>
 

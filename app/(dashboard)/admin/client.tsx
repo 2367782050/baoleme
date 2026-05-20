@@ -41,7 +41,7 @@ export function AdminClient() {
   if(error&&tab!=="概览") return <div className="admin-glass-page min-h-screen px-6 py-12 text-sm text-red-500">{error}</div>;
 
   return (
-    <div className="admin-glass-page min-h-screen pt-6 pb-20 px-6">
+    <div className="admin-glass-page depth-page min-h-screen pt-6 pb-20 px-6">
       <div className="mx-auto max-w-7xl flex flex-col lg:flex-row gap-6">
         {/* Sidebar */}
         <div className="lg:w-52 shrink-0">

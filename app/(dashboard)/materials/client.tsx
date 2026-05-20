@@ -72,7 +72,7 @@ export function MaterialsClient() {
   }
 
   return (
-    <div className="glass-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
         {/* Title */}
         <div className="mb-6">

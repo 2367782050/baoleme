@@ -246,7 +246,7 @@ test("OA: create mock OA, verify in list, delete removes it from active list", a
   // Click delete on the OA card
   await page.locator(".glass-tile").filter({ hasText: oaName }).locator("button:has-text('删除')").click();
   // Glass modal appears — click confirm inside the modal
-  await page.locator(".modal-float").getByRole("button", { name: "删除" }).click();
+  await page.locator(".depth-modal").getByRole("button", { name: "删除" }).click();
   await expect(page.getByText(oaName)).not.toBeVisible({ timeout: 5000 });
 });
 
@@ -259,7 +259,7 @@ test("membership: create order, mock pay, verify order status becomes paid", asy
   page.once("dialog", async (dialog) => { await dialog.accept(); });
   await page.locator("button:has-text('开通'):not(:has-text('默认'))").first().click();
   // Glass modal appears — click confirm
-  await page.locator(".modal-float button:has-text('确定')").click();
+  await page.locator(".depth-modal button:has-text('确定')").click();
 
   // Wait for the order to appear (plan name + order number pattern)
   const orderRow = page.locator("div").filter({ hasText: /专业版|企业版/ }).filter({ hasText: /待支付|已支付/ }).first();
