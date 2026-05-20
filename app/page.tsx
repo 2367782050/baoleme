@@ -10,48 +10,49 @@ const FEATURES = [
   { icon: "/ui-assets/admin-membership.png", label: "会员推广", desc: "灵活套餐与推广返佣" },
 ];
 
+const HERO_CARDS = [
+  { icon: "/ui-assets/tool-viral-topic.png", title: "今日爆款选题", desc: "全平台热搜、高传播内容实时发现" },
+  { icon: "/ui-assets/tool-ai-writing.png", title: "AI 生成文章", desc: "选素材、定提示词，AI 辅助高质量写作" },
+  { icon: "/ui-assets/tool-image-tool.png", title: "一键排版发布", desc: "Markdown 转精美公众号 HTML" },
+];
+
 export default function Home() {
   return (
     <div className="glass-page">
-      <div className="mx-auto max-w-6xl px-6 pt-24 pb-20">
-        {/* Hero section */}
-        <div className="text-center mb-16">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-zinc-900 tracking-tight">
-            爆了么
-          </h1>
-          <p className="mt-4 text-lg text-zinc-500 max-w-lg mx-auto leading-relaxed">
-            从找选题到一键排版，自媒体创作全流程工具
-          </p>
-          <div className="mt-8 flex gap-4 justify-center">
-            <Link href="/register" className="glass-btn-primary !px-6 !py-2.5 !text-base">开始创作</Link>
-            <Link href="/login" className="glass-btn-secondary !px-6 !py-2.5 !text-base">登录</Link>
-          </div>
-        </div>
-
-        {/* Hero dashboard card */}
-        <div className="glass-card p-8 mb-12">
-          <div className="flex flex-col lg:flex-row items-center gap-8">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-zinc-900">AI 助力创作，让内容更容易爆</h2>
-              <p className="mt-3 text-zinc-500 leading-relaxed max-w-md">
-                聚合全平台爆款素材，AI 生成高质量提示词，智能辅助写作，一键排版发布到公众号。
-              </p>
-              <div className="flex gap-3 mt-6">
-                <div className="glass-tile px-4 py-2 text-sm text-zinc-600">
-                  <span className="font-bold text-teal-600">100K+</span> 爆款素材
-                </div>
-                <div className="glass-tile px-4 py-2 text-sm text-zinc-600">
-                  <span className="font-bold text-sky-600">AI</span> 智能创作
-                </div>
-                <div className="glass-tile px-4 py-2 text-sm text-zinc-600">
-                  <span className="font-bold text-violet-600">一键</span> 排版发布
-                </div>
-              </div>
+      <div className="mx-auto max-w-6xl px-6 pt-28 pb-20">
+        {/* Hero */}
+        <div className="flex flex-col lg:flex-row items-center gap-12 mb-16">
+          {/* Left: brand + CTA */}
+          <div className="flex-1 text-center lg:text-left">
+            <h1 className="text-5xl sm:text-6xl font-extrabold text-zinc-900 tracking-tight">
+              爆了么
+            </h1>
+            <p className="mt-4 text-lg text-zinc-500 max-w-md leading-relaxed">
+              从找选题到一键排版，自媒体创作全流程工具
+            </p>
+            <div className="mt-8 flex gap-4 justify-center lg:justify-start">
+              <Link href="/register" className="glass-btn-primary !px-7 !py-3 !text-base">开始使用</Link>
+              <Link href="/login" className="glass-btn-secondary !px-7 !py-3 !text-base">登录账号</Link>
             </div>
-            <div className="flex gap-4">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-sky-300/60 to-sky-400/40" />
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-teal-300/60 to-emerald-400/40 mt-6" />
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-amber-200/60 to-yellow-300/40" />
+          </div>
+
+          {/* Right: product preview cards */}
+          <div className="flex-1">
+            <div className="glass-card p-6 space-y-3">
+              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">产品预览</p>
+              {HERO_CARDS.map(({ icon, title, desc }) => (
+                <div key={title} className="flex items-center gap-4 p-3 rounded-2xl bg-white/40">
+                  <Image src={icon} alt={title} width={44} height={44} className="shrink-0" />
+                  <div className="min-w-0">
+                    <h3 className="text-sm font-semibold text-zinc-800">{title}</h3>
+                    <p className="text-xs text-zinc-400 mt-0.5">{desc}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center gap-2 pt-1">
+                <span className="badge-ok">AI Ready</span>
+                <span className="text-xs text-zinc-400">创作引擎已就绪</span>
+              </div>
             </div>
           </div>
         </div>
@@ -59,8 +60,8 @@ export default function Home() {
         {/* Feature grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {FEATURES.map(({ icon, label, desc }) => (
-            <Link key={label} href={label === "爆款素材" ? "/materials" : label === "提示词库" ? "/prompts" : label === "智能创作" ? "/writing" : label === "一键排版" ? "/formatter" : label === "公众号管理" ? "/official-accounts" : "/membership"} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_20px_50px_rgba(15,23,42,0.10)] transition-shadow">
-              <Image src={icon} alt={label} width={44} height={44} className="shrink-0" />
+            <Link key={label} href={label === "爆款素材" ? "/materials" : label === "提示词库" ? "/prompts" : label === "智能创作" ? "/writing" : label === "一键排版" ? "/formatter" : label === "公众号管理" ? "/official-accounts" : "/membership"} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
+              <Image src={icon} alt={label} width={56} height={56} className="shrink-0" />
               <div>
                 <h3 className="font-semibold text-zinc-900 group-hover:text-teal-700 transition-colors">{label}</h3>
                 <p className="mt-1 text-sm text-zinc-400">{desc}</p>

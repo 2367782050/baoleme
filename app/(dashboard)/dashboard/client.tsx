@@ -20,37 +20,68 @@ const TOOLS = [
   { icon: "/ui-assets/tool-template.png", label: "创作模板", desc: "高分提示词模板库", href: "/prompts" },
 ];
 
+const FLOW_STEPS = [
+  { icon: "/ui-assets/tool-viral-topic.png", label: "素材" },
+  { icon: "/ui-assets/tool-template.png", label: "提示词" },
+  { icon: "/ui-assets/tool-ai-writing.png", label: "文章" },
+  { icon: "/ui-assets/tool-image-tool.png", label: "排版" },
+];
+
 export function DashboardClient({ data }: { data: DashboardData }) {
   return (
     <div className="glass-page pt-6 pb-20 px-6">
       <div className="mx-auto max-w-6xl">
-        {/* Welcome */}
-        <div className="mb-8">
-          <p className="text-sm text-zinc-400 mb-1">上午好</p>
-          <h1 className="text-3xl font-bold text-zinc-900">你好，{data.user.username}</h1>
-          <p className="mt-1 text-zinc-500">今天灵感满满，继续创作出更多爆款内容吧！</p>
+        {/* Welcome — compact */}
+        <div className="mb-6">
+          <p className="text-xs text-zinc-400">你好，{data.user.username}</p>
         </div>
 
-        {/* Hero card */}
-        <div className="glass-card p-8 mb-8">
-          <div className="flex flex-col lg:flex-row items-center gap-8">
+        {/* Hero card — creative progress preview */}
+        <div className="glass-card p-6 mb-8">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Left: today's inspiration */}
             <div className="flex-1">
-              <h2 className="text-xl font-bold text-zinc-900">欢迎使用 爆了么</h2>
-              <p className="mt-2 text-zinc-500 max-w-md">AI 助力创作，让内容更容易爆。选素材、定提示词、生成文章、排版发布，全流程一站完成。</p>
-              <div className="flex gap-3 mt-5">
-                <Link href="/writing" className="glass-btn-primary">开始创作</Link>
-                <Link href="/materials" className="glass-btn-secondary">浏览素材</Link>
+              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">今日灵感</p>
+              <div className="space-y-2">
+                {["2026下半年投资策略：防御性配置思路", "AI 概念股还能涨多久？", "创业3年，我学到的5条管理铁律"].map((t, i) => (
+                  <div key={i} className="flex items-center gap-3 text-sm text-zinc-700">
+                    <span className="w-5 h-5 rounded-full bg-gradient-to-br from-sky-400/20 to-teal-400/20 flex items-center justify-center text-xs font-medium text-teal-600 shrink-0">{i + 1}</span>
+                    <span className="truncate">{t}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="flex gap-4">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-sky-300/60 to-sky-400/40" />
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-300/60 to-emerald-400/40 mt-8" />
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-violet-300/60 to-purple-400/40" />
+
+            {/* Center: flow */}
+            <div className="flex-1">
+              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider mb-3">创作流程</p>
+              <div className="flex items-center gap-2">
+                {FLOW_STEPS.map((step, i) => (
+                  <div key={step.label} className="flex items-center gap-2">
+                    <div className="flex flex-col items-center gap-1">
+                      <Image src={step.icon} alt={step.label} width={36} height={36} className="shrink-0" />
+                      <span className="text-[10px] text-zinc-400">{step.label}</span>
+                    </div>
+                    {i < FLOW_STEPS.length - 1 && <span className="text-zinc-300 text-lg">→</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: status + CTA */}
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex items-center gap-2">
+                <span className="badge-ok">AI Ready</span>
+                <span className="text-xs text-zinc-400">
+                  {data.membership?.planName ?? "免费版"}
+                </span>
+              </div>
+              <Link href="/writing" className="glass-btn-primary !text-sm !py-2 !px-5">开始创作</Link>
             </div>
           </div>
         </div>
 
-        {/* Stats */}
+        {/* Stats — tighter, stronger numbers */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           {[
             { label: "内容创作", value: "12", sub: "篇", color: "text-teal-600" },
@@ -59,13 +90,13 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             { label: "转化点击", value: "8.2K", sub: "总点击", color: "text-violet-600" },
           ].map(({ label, value, sub, color }) => (
             <div key={label} className="glass-tile p-4">
-              <p className="text-xs text-zinc-400 mb-1">{label}</p>
-              <p className={`text-2xl font-bold ${color}`}>{value}<span className="text-xs text-zinc-400 font-normal ml-1">{sub}</span></p>
+              <p className={`text-3xl font-extrabold ${color} tracking-tight`}>{value}</p>
+              <p className="text-xs text-zinc-400 mt-1">{label} <span className="text-zinc-300">{sub}</span></p>
             </div>
           ))}
         </div>
 
-        {/* Quota */}
+        {/* Quota — compact row */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
           {Object.entries(data.quota).map(([k, v]) => (
             <div key={k} className="glass-tile px-3 py-2.5">
@@ -75,11 +106,11 @@ export function DashboardClient({ data }: { data: DashboardData }) {
           ))}
         </div>
 
-        {/* Tool grid */}
+        {/* Tool grid — hover lift */}
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">创作工具</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {TOOLS.map(({ icon, label, desc, href }) => (
-            <Link key={label} href={href} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_20px_50px_rgba(15,23,42,0.10)] transition-shadow">
+            <Link key={label} href={href} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_24px_60px_rgba(15,23,42,0.14)] hover:-translate-y-0.5 transition-all duration-200">
               <Image src={icon} alt={label} width={56} height={56} className="shrink-0" />
               <div>
                 <h3 className="font-semibold text-zinc-900 text-sm group-hover:text-teal-700 transition-colors">{label}</h3>
