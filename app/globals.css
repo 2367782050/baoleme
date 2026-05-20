@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 :root {
   --background: #f8fcff;
@@ -494,89 +494,138 @@ button:hover .tool-icon-motion,
   box-shadow: 0 4px 12px rgba(45, 212, 191, 0.30);
   cursor: pointer;
 }
+/* Phase 18C - centered auth shell */
 
-/* ═══════════════════════════════════════════════════════════════
-   Phase 18B — Auth Shell + Spatial Transitions
-   ═══════════════════════════════════════════════════════════════ */
+.auth-center-page {
+  min-height: calc(100vh - 96px);
+  overflow: hidden;
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 2.5rem 1rem;
+}
 
-.auth-shell {
-  display: flex; min-height: 100vh; overflow: hidden;
-}
-.auth-brand {
-  flex: 1; display: flex; flex-direction: column; justify-content: center;
-  padding: 3rem; position: relative; overflow: hidden;
-}
-.auth-brand::before {
-  content: ""; position: absolute; inset: 0;
+.auth-center-light {
+  position: absolute;
+  inset: 10% 8%;
   background:
-    radial-gradient(ellipse 80% 60% at 30% 40%, rgba(125,211,252,0.32), transparent 60%),
-    radial-gradient(ellipse 60% 80% at 70% 70%, rgba(167,243,208,0.22), transparent 60%);
-  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    radial-gradient(circle at 28% 36%, rgba(56, 189, 248, 0.22), transparent 34%),
+    radial-gradient(circle at 68% 64%, rgba(45, 212, 191, 0.20), transparent 36%),
+    radial-gradient(circle at 50% 88%, rgba(250, 204, 21, 0.12), transparent 40%);
+  filter: blur(36px);
+  opacity: 0.95;
+  transform: translateX(-2%) scale(1);
+  transition:
+    transform 0.58s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.42s ease,
+    filter 0.42s ease;
+  pointer-events: none;
 }
-.auth-shell.login-mode .auth-brand::before { transform: translateX(-4%); }
-.auth-shell.register-mode .auth-brand::before { transform: translateX(4%); }
-.auth-mini-cards {
-  display: flex; flex-direction: column; gap: 0.75rem; margin-top: 2rem;
-  position: relative; z-index: 1;
+
+.auth-center-page.register-mode .auth-center-light {
+  transform: translateX(2%) scale(1.02);
 }
-.auth-mini-card {
-  display: flex; align-items: center; gap: 0.75rem;
-  background: rgba(255,255,255,0.52); backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.60);
-  border-radius: 16px; padding: 0.75rem 1rem;
-  font-size: 0.875rem; color: #334155;
-  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1), opacity 0.35s ease;
+
+.auth-center-page.auth-leaving .auth-center-light {
+  opacity: 0.55;
+  filter: blur(50px);
+  transform: translateY(-6px) scale(0.92);
 }
-.auth-mini-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px rgba(15,23,42,0.06);
+
+.auth-center-shell {
+  width: min(100%, 460px);
+  position: relative;
+  z-index: 1;
+  perspective: 1200px;
 }
-.auth-form-area {
-  flex: 1; display: flex; align-items: center; justify-content: center;
-  padding: 2rem; position: relative;
-}
+
 .auth-form-card {
-  width: 100%; max-width: 420px;
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.35s ease;
-  position: relative; z-index: 1;
+  width: 100%;
+  max-width: 460px;
+  position: relative;
+  z-index: 1;
+  transform-origin: center;
+  transition:
+    transform 0.46s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.34s ease,
+    visibility 0s linear 0s;
 }
+
 .auth-form-card.forward {
-  transform: translateX(0) scale(1); opacity: 1; visibility: visible;
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  position: relative;
+  transform: translateX(0) translateY(0) scale(1) rotateX(0deg);
 }
+
 .auth-form-card.back {
-  transform: translateX(40px) scale(0.96); opacity: 0;
-  visibility: hidden; pointer-events: none;
-  position: absolute; top: 0; left: 0; right: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  transform: translateX(42px) translateY(8px) scale(0.965) rotateX(2deg);
 }
-.auth-shell.register-mode .auth-form-card[data-mode="login"] {
-  transform: translateX(-40px) scale(0.96); opacity: 0;
-  visibility: hidden; pointer-events: none;
-  position: absolute; top: 0; left: 0; right: 0;
+
+.auth-center-page.register-mode .auth-form-card[data-mode="login"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  transform: translateX(-42px) translateY(8px) scale(0.965) rotateX(2deg);
 }
-.auth-shell.register-mode .auth-form-card[data-mode="register"] {
-  transform: translateX(0) scale(1); opacity: 1;
-  visibility: visible; pointer-events: auto; position: relative;
+
+.auth-center-page.register-mode .auth-form-card[data-mode="register"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  position: relative;
+  transform: translateX(0) translateY(0) scale(1) rotateX(0deg);
 }
-.auth-error, .auth-status {
-  animation: drawerExpandIn 0.25s cubic-bezier(0.16,1,0.3,1) both;
+
+.auth-center-page.auth-back .auth-form-card.back {
+  transform: translateX(-42px) translateY(8px) scale(0.965) rotateX(2deg);
+}
+
+.auth-center-page.auth-leaving .auth-form-card.forward {
+  opacity: 0;
+  transform: translateY(-8px) scale(1.035);
+  pointer-events: none;
+}
+
+.auth-card-inner {
+  min-height: 430px;
+  box-shadow:
+    0 34px 90px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.auth-error,
+.auth-status {
+  animation: drawerExpandIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @media (max-width: 768px) {
-  .auth-shell { flex-direction: column; }
-  .auth-brand { flex: none; padding: 2rem 1.5rem 0; min-height: auto; }
-  .auth-brand::before { display: none; }
-  .auth-mini-cards { display: none; }
-  .auth-form-area { flex: 1; padding: 1.5rem; }
-  /* Mobile: cancel transforms but keep mode-based visibility */
+  .auth-center-page {
+    min-height: calc(100vh - 84px);
+    padding: 1.5rem 1rem;
+  }
+  .auth-center-shell {
+    width: min(100%, 430px);
+    perspective: none;
+  }
+  .auth-card-inner {
+    min-height: auto;
+    padding: 1.5rem;
+  }
   .auth-form-card.forward,
   .auth-form-card.back,
-  .auth-shell.register-mode .auth-form-card[data-mode="login"],
-  .auth-shell.register-mode .auth-form-card[data-mode="register"] {
-    transform: none;
+  .auth-center-page.register-mode .auth-form-card[data-mode="login"],
+  .auth-center-page.register-mode .auth-form-card[data-mode="register"] {
     max-width: 100%;
-    /* DO NOT override opacity or pointer-events — .back handles visibility */
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -586,8 +635,7 @@ button:hover .tool-icon-motion,
   .depth-page, .depth-stage > *, .depth-tab-content, .depth-drawer,
   .depth-modal-backdrop, .depth-modal, .modal-backdrop, .modal-float,
   .motion-generating, .motion-task::after, .motion-success,
-  .auth-brand, .auth-brand::before, .auth-form-card, .auth-mini-card,
-  .auth-error, .auth-status {
+  .auth-center-light, .auth-form-card, .auth-error, .auth-status {
     animation: none;
     /* opacity:1 is needed for depth-stage children but NOT for auth-form-card */
   }
@@ -608,8 +656,8 @@ button:hover .tool-icon-motion,
   /* Auth: disable transforms but keep mode-based visibility (NO opacity/pointer-events change) */
   .auth-form-card.forward,
   .auth-form-card.back,
-  .auth-shell.register-mode .auth-form-card[data-mode="login"],
-  .auth-shell.register-mode .auth-form-card[data-mode="register"] {
+  .auth-center-page.register-mode .auth-form-card[data-mode="login"],
+  .auth-center-page.register-mode .auth-form-card[data-mode="register"] {
     transform: none;
   }
 }
