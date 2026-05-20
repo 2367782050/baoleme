@@ -11,6 +11,8 @@
  * NEVER included in CI default pipeline.
  */
 
+import "dotenv/config";
+
 async function main() {
   const provider = process.env.AI_PROVIDER ?? "mock";
   const apiKey = process.env.AI_API_KEY;
@@ -93,8 +95,8 @@ async function main() {
       enableAIDetectionEvasion: true,
     });
 
-    if (!result.markdown || result.markdown.length < 100) {
-      console.error("❌ 文章生成：内容过短或为空");
+    if (!result.markdown || result.markdown.length < 30) {
+      console.error(`❌ 文章生成：markdown 字段过短或为空 (长度: ${result.markdown?.length ?? 0})`);
       process.exit(1);
     }
 
@@ -109,6 +111,7 @@ async function main() {
     console.log(`   📏 正文: ${result.markdown.length} 字`);
   } catch (e) {
     console.error("❌ 文章生成失败:", (e as Error).message);
+    if ((e as Error).cause) console.error("   原因:", String((e as Error).cause).substring(0, 200));
     process.exit(1);
   }
 

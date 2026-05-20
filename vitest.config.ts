@@ -18,6 +18,7 @@ export default defineConfig({
     },
     env: {
       DATABASE_URL: process.env.DATABASE_URL!,
+      AI_PROVIDER: "mock",
     },
   },
   resolve: {

@@ -68,6 +68,12 @@ export class OpenAICompatibleProvider implements AIProvider {
   private async chatJson<T>(input: unknown, type: string): Promise<{ result: T; usage: TokenUsage }> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const typeLabels: Record<string, string> = {
+      analyzeMaterial: "分析素材并提取可用的选题角度和结构建议",
+      generateArticle: "生成一篇完整的公众号文章（title, excerpt, markdown 三字段都必须有中文内容）",
+      reviewArticle: "审核文章质量并给出评分和改进建议",
+      rewriteArticle: "根据审核意见重写文章",
+    };
     try {
       const res = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
@@ -75,10 +81,9 @@ export class OpenAICompatibleProvider implements AIProvider {
         body: JSON.stringify({
           model: this.model,
           messages: [
-            { role: "system", content: `You are a Chinese content creator. Task: ${type}. Output ONLY valid JSON, no markdown.` },
-            { role: "user", content: JSON.stringify(input) },
+            { role: "system", content: `你是专业的中文自媒体内容创作者。任务：${typeLabels[type] ?? type}。请输出合法 JSON，所有文本字段必须使用中文。直接输出纯 JSON 对象，开头就是 {，不要加任何解释或 Markdown 代码块。` },
+            { role: "user", content: `任务类型：${type}\n输入数据：${JSON.stringify(input)}` },
           ],
-          response_format: { type: "json_object" },
           temperature: 0.7,
           max_tokens: 4096,
         }),
@@ -88,8 +93,13 @@ export class OpenAICompatibleProvider implements AIProvider {
         throw await this.handleResponse(res);
       }
       const body = await res.json();
-      const raw = body.choices?.[0]?.message?.content ?? "";
+      let raw = (body.choices?.[0]?.message?.content ?? "").trim();
       if (!raw) throw this.aiError("AI 未返回有效结果，请重试");
+
+      // Extract JSON from Markdown code blocks if present (DeepSeek habit)
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) raw = jsonMatch[0];
+
       let parsed: T;
       try { parsed = JSON.parse(raw) as T; } catch { throw this.aiError("AI 返回格式异常，请重试"); }
       return {
@@ -171,7 +181,6 @@ ${input.userNotes}
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          response_format: { type: "json_object" },
           temperature: 0.7,
           max_tokens: 4096,
         }),
@@ -183,8 +192,10 @@ ${input.userNotes}
       }
 
       const body = await res.json();
-      const raw = body.choices?.[0]?.message?.content ?? "";
+      let raw = (body.choices?.[0]?.message?.content ?? "").trim();
       if (!raw) throw this.aiError("AI 未返回有效结果，请重试");
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) raw = jsonMatch[0];
       let result: GeneratePromptResult;
       try { result = JSON.parse(raw) as GeneratePromptResult; } catch { throw this.aiError("AI 返回格式异常，请重试"); }
 
