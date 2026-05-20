@@ -72,17 +72,17 @@ jobs:
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
-      - name: Console check (tsx)
+      - name: Start dev server
         run: |
           npx next dev --port 3000 &
           sleep 5
-          npx tsx scripts/console-check.ts
+          curl --retry 5 --retry-delay 2 http://localhost:3000/api/health
+
+      - name: Console check (tsx)
+        run: npx tsx scripts/console-check.ts
 
       - name: Playwright E2E
-        run: npm run verify:e2e
+        run: PLAYWRIGHT_REUSE_SERVER=1 npm run verify:e2e
 
       - name: Screenshots
-        run: |
-          npx next dev --port 3000 &
-          sleep 5
-          npx tsx scripts/screenshots.ts
+        run: npx tsx scripts/screenshots.ts
