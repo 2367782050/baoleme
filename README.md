@@ -82,6 +82,33 @@ npm run dev
 - **提现**: mock 审核通过/驳回，不真实打款
 - **AI**: 默认 MockAIProvider，可通过 `AI_*` 环境变量切换真实 Provider
 
+### 真实 AI 配置
+
+默认使用 MockAIProvider，无需任何配置。要接入真实 AI：
+
+1. 复制 `.env.example` 为 `.env`
+2. 设置环境变量：
+
+```env
+AI_PROVIDER=openai-compatible
+AI_BASE_URL=https://api.deepseek.com/v1
+AI_API_KEY=sk-your-key
+AI_MODEL=deepseek-chat
+AI_TIMEOUT_MS=30000
+```
+
+支持的 Provider：DeepSeek、OpenAI、硅基流动、OpenRouter、通义千问兼容接口等任何兼容 `/chat/completions` 的服务。
+
+### 真实 AI 验收
+
+配置完成后来验收真实模型输出质量：
+
+```bash
+npm run verify:ai
+```
+
+未配置真实 AI 时会自动跳过，不影响 CI。
+
 ## 项目结构
 
 ```

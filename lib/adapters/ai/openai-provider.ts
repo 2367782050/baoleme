@@ -31,6 +31,24 @@ export class OpenAICompatibleProvider implements AIProvider {
     this.timeoutMs = config.timeoutMs ?? 120000;
   }
 
+  private aiError(message: string, cause?: unknown): Error {
+    const err = new Error(message);
+    (err as unknown as Record<string, unknown>).cause = cause;
+    (err as unknown as Record<string, unknown>).code = "AI_PROVIDER_ERROR";
+    return err;
+  }
+
+  private async handleResponse(res: Response): Promise<Record<string, unknown>> {
+    const text = await res.text().catch(() => "");
+    if (res.status === 401 || res.status === 403) {
+      throw this.aiError("AI 认证失败，请检查 API Key 和权限");
+    }
+    if (res.status >= 500) {
+      throw this.aiError("AI 服务暂时不可用，请稍后重试");
+    }
+    throw this.aiError(`AI 请求失败 (${res.status}): ${text.substring(0, 300)}`);
+  }
+
   async analyzeMaterial(input: AnalyzeMaterialInput): Promise<{ result: AnalyzeMaterialResult; usage: TokenUsage }> {
     return this.chatJson<AnalyzeMaterialResult>(input, "analyzeMaterial");
   }
@@ -67,19 +85,27 @@ export class OpenAICompatibleProvider implements AIProvider {
         signal: controller.signal,
       });
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`AI API error ${res.status}: ${text.substring(0, 200)}`);
+        throw await this.handleResponse(res);
       }
       const body = await res.json();
       const raw = body.choices?.[0]?.message?.content ?? "";
+      if (!raw) throw this.aiError("AI 未返回有效结果，请重试");
+      let parsed: T;
+      try { parsed = JSON.parse(raw) as T; } catch { throw this.aiError("AI 返回格式异常，请重试"); }
       return {
-        result: JSON.parse(raw) as T,
+        result: parsed,
         usage: {
           promptTokens: body.usage?.prompt_tokens ?? 0,
           completionTokens: body.usage?.completion_tokens ?? 0,
           totalTokens: body.usage?.total_tokens ?? 0,
         },
       };
+    } catch (e) {
+      if (e instanceof Error && (e as unknown as Record<string,unknown>).code === "AI_PROVIDER_ERROR") throw e;
+      if ((e as Error).name === "AbortError") {
+        throw this.aiError(`AI 调用超时（${this.timeoutMs}ms），请检查网络或增加超时时间`);
+      }
+      throw this.aiError("AI 调用失败，请检查网络连接和 API 配置", e);
     } finally {
       clearTimeout(timer);
     }
@@ -153,13 +179,14 @@ ${input.userNotes}
       });
 
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`AI API error ${res.status}: ${text.substring(0, 200)}`);
+        throw await this.handleResponse(res);
       }
 
       const body = await res.json();
       const raw = body.choices?.[0]?.message?.content ?? "";
-      const result = JSON.parse(raw) as GeneratePromptResult;
+      if (!raw) throw this.aiError("AI 未返回有效结果，请重试");
+      let result: GeneratePromptResult;
+      try { result = JSON.parse(raw) as GeneratePromptResult; } catch { throw this.aiError("AI 返回格式异常，请重试"); }
 
       return {
         result,
@@ -169,6 +196,12 @@ ${input.userNotes}
           totalTokens: body.usage?.total_tokens ?? 0,
         },
       };
+    } catch (e) {
+      if (e instanceof Error && (e as unknown as Record<string,unknown>).code === "AI_PROVIDER_ERROR") throw e;
+      if ((e as Error).name === "AbortError") {
+        throw this.aiError(`AI 调用超时（${this.timeoutMs}ms），请检查网络或增加超时时间`);
+      }
+      throw this.aiError("AI 调用失败，请检查网络连接和 API 配置", e);
     } finally {
       clearTimeout(timer);
     }
