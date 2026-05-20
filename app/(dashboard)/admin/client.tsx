@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { formatUserStatus, formatOrderStatus, formatWithdrawalStatus, formatJobStatus, formatRole } from "@/lib/ui/labels";
 
 const SIDEBAR_ITEMS = ["概览","用户管理","会员管理","订单管理","提现审核","AI 任务"] as const;
 type Tab = (typeof SIDEBAR_ITEMS)[number];
@@ -77,8 +78,8 @@ export function AdminClient() {
             <div className="glass-card overflow-hidden">
               <table className="glass-table"><thead><tr><th>用户名</th><th>邮箱</th><th>角色</th><th>状态</th><th>操作</th></tr></thead>
                 <tbody>{filteredUsers.map((u:Record<string,unknown>)=><tr key={String(u.id)} data-testid={`admin-user-row-${u.id}`}>
-                  <td className="font-medium">{String(u.username)}</td><td className="text-zinc-500">{String(u.email)}</td><td>{String(u.role)}</td>
-                  <td><span data-testid={`admin-user-status-${u.id}`} className={u.status==="active"?"badge-ok":"badge-err"}>{String(u.status)}</span></td>
+                  <td className="font-medium">{String(u.username)}</td><td className="text-zinc-500">{String(u.email)}</td><td>{formatRole(String(u.role))}</td>
+                  <td><span data-testid={`admin-user-status-${u.id}`} className={u.status==="active"?"badge-ok":"badge-err"}>{formatUserStatus(String(u.status))}</span></td>
                   <td><button data-testid={`admin-user-toggle-${u.id}`} onClick={()=>toggleUserStatus(String(u.id),String(u.status))} className="text-xs font-medium text-sky-600 hover:text-sky-700">{u.status==="active"?"禁用":"启用"}</button></td>
                 </tr>)}</tbody></table>
             </div>
@@ -93,7 +94,7 @@ export function AdminClient() {
             <h2 className="text-lg font-semibold text-zinc-900 mb-4">订单管理</h2>
             <div className="glass-card overflow-hidden">
               <table className="glass-table"><thead><tr><th>订单号</th><th>用户</th><th>套餐</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
-                <tbody>{orders.map((o:Record<string,unknown>)=><tr key={String(o.id)}><td className="font-mono text-xs text-zinc-500">{String(o.orderNo)}</td><td>{(o.user as Record<string,unknown>)?.username as string??""}</td><td>{(o.plan as Record<string,unknown>)?.name as string??""}</td><td>¥{Number(o.amountCents)/100}</td><td><span className={o.status==="paid"?"badge-ok":"badge-warn"}>{String(o.status)}</span></td><td className="text-xs text-zinc-400">{new Date(String(o.createdAt)).toLocaleDateString()}</td></tr>)}</tbody></table>
+                <tbody>{orders.map((o:Record<string,unknown>)=><tr key={String(o.id)}><td className="font-mono text-xs text-zinc-500">{String(o.orderNo)}</td><td>{(o.user as Record<string,unknown>)?.username as string??""}</td><td>{(o.plan as Record<string,unknown>)?.name as string??""}</td><td>¥{Number(o.amountCents)/100}</td><td><span className={o.status==="paid"?"badge-ok":"badge-warn"}>{formatOrderStatus(String(o.status))}</span></td><td className="text-xs text-zinc-400">{new Date(String(o.createdAt)).toLocaleDateString()}</td></tr>)}</tbody></table>
             </div>
           </div>}
 
@@ -103,7 +104,7 @@ export function AdminClient() {
               <table className="glass-table"><thead><tr><th>用户</th><th>金额</th><th>支付宝</th><th>状态</th><th>时间</th><th>操作</th></tr></thead>
                 <tbody>{withdrawals.map((w:Record<string,unknown>)=><tr key={String(w.id)} data-testid={`admin-withdrawal-row-${w.id}`}>
                   <td>{(w.user as Record<string,unknown>)?.username as string??""}</td><td>¥{Number(w.amountCents)/100}</td><td className="text-zinc-500">{String(w.alipayName)}</td>
-                  <td><span className={w.status==="pending"?"badge-warn":w.status==="approved"?"badge-ok":"badge-muted"}>{String(w.status)}</span></td>
+                  <td><span className={w.status==="pending"?"badge-warn":w.status==="approved"?"badge-ok":"badge-muted"}>{formatWithdrawalStatus(String(w.status))}</span></td>
                   <td className="text-xs text-zinc-400">{new Date(String(w.createdAt)).toLocaleDateString()}</td>
                   <td>{w.status==="pending"&&<div className="flex gap-2"><button onClick={()=>reviewW(String(w.id),"approved")} className="text-xs font-medium text-green-600">通过</button><button onClick={()=>reviewW(String(w.id),"rejected")} className="text-xs font-medium text-red-500">驳回</button></div>}</td>
                 </tr>)}</tbody></table>
@@ -113,11 +114,11 @@ export function AdminClient() {
           {tab==="AI 任务"&&<div data-testid="admin-ai-panel" className="space-y-6">
             <div className="glass-card p-5">
               <h3 className="font-semibold text-zinc-900 mb-3">提示词生成任务</h3>
-              <div className="space-y-1">{pj.slice(0,20).map((j:Record<string,unknown>)=><div key={String(j.id)} className="flex items-center justify-between text-xs py-2 border-b border-black/5 last:border-0"><span>{(j.user as Record<string,unknown>)?.username as string??""}</span><span className={j.status==="failed"?"badge-err":j.status==="completed"?"badge-ok":"badge-info"}>{String(j.status)}</span><span className="text-zinc-400 truncate max-w-xs">{j.errorMessage?String(j.errorMessage).substring(0,60):""}</span></div>)}</div>
+              <div className="space-y-1">{pj.slice(0,20).map((j:Record<string,unknown>)=><div key={String(j.id)} className="flex items-center justify-between text-xs py-2 border-b border-black/5 last:border-0"><span>{(j.user as Record<string,unknown>)?.username as string??""}</span><span className={j.status==="failed"?"badge-err":j.status==="completed"?"badge-ok":"badge-info"}>{formatJobStatus(String(j.status))}</span><span className="text-zinc-400 truncate max-w-xs">{j.errorMessage?String(j.errorMessage).substring(0,60):""}</span></div>)}</div>
             </div>
             <div className="glass-card p-5">
               <h3 className="font-semibold text-zinc-900 mb-3">文章生成任务</h3>
-              <div className="space-y-1">{aj.slice(0,20).map((j:Record<string,unknown>)=><div key={String(j.id)} className="flex items-center justify-between text-xs py-2 border-b border-black/5 last:border-0"><span>{(j.user as Record<string,unknown>)?.username as string??""}</span><span className="text-zinc-400">{(j.article as Record<string,unknown>)?.title as string??""}</span><span className={j.status==="failed"?"badge-err":j.status==="completed"?"badge-ok":"badge-info"}>{String(j.status)}</span></div>)}</div>
+              <div className="space-y-1">{aj.slice(0,20).map((j:Record<string,unknown>)=><div key={String(j.id)} className="flex items-center justify-between text-xs py-2 border-b border-black/5 last:border-0"><span>{(j.user as Record<string,unknown>)?.username as string??""}</span><span className="text-zinc-400">{(j.article as Record<string,unknown>)?.title as string??""}</span><span className={j.status==="failed"?"badge-err":j.status==="completed"?"badge-ok":"badge-info"}>{formatJobStatus(String(j.status))}</span></div>)}</div>
             </div>
           </div>}
         </div>

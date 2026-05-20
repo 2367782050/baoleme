@@ -5,7 +5,7 @@ const FEATURES = [
   { icon: "/ui-assets/tool-viral-topic.png", label: "爆款素材", desc: "发现全网高质量爆款内容" },
   { icon: "/ui-assets/tool-template.png", label: "提示词库", desc: "AI 生成和管理高分提示词" },
   { icon: "/ui-assets/tool-ai-writing.png", label: "智能创作", desc: "AI 辅助生成高质量文章" },
-  { icon: "/ui-assets/tool-image-tool.png", label: "一键排版", desc: "Markdown 转公众号 HTML" },
+  { icon: "/ui-assets/tool-image-tool.png", label: "一键排版", desc: "文章内容转公众号排版" },
   { icon: "/ui-assets/admin-overview.png", label: "公众号管理", desc: "管理授权与草稿推送" },
   { icon: "/ui-assets/admin-membership.png", label: "会员推广", desc: "灵活套餐与推广返佣" },
 ];
@@ -13,7 +13,7 @@ const FEATURES = [
 const HERO_CARDS = [
   { icon: "/ui-assets/tool-viral-topic.png", title: "今日爆款选题", desc: "全平台热搜、高传播内容实时发现" },
   { icon: "/ui-assets/tool-ai-writing.png", title: "AI 生成文章", desc: "选素材、定提示词，AI 辅助高质量写作" },
-  { icon: "/ui-assets/tool-image-tool.png", title: "一键排版发布", desc: "Markdown 转精美公众号 HTML" },
+  { icon: "/ui-assets/tool-image-tool.png", title: "一键排版发布", desc: "文章内容转精美公众号排版" },
 ];
 
 export default function Home() {
@@ -50,7 +50,7 @@ export default function Home() {
                 </div>
               ))}
               <div className="flex items-center gap-2 pt-1">
-                <span className="badge-ok">AI Ready</span>
+                <span className="badge-ok">创作引擎已就绪</span>
                 <span className="text-xs text-zinc-400">创作引擎已就绪</span>
               </div>
             </div>
@@ -58,10 +58,10 @@ export default function Home() {
         </div>
 
         {/* Feature grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 motion-stagger">
           {FEATURES.map(({ icon, label, desc }) => (
             <Link key={label} href={label === "爆款素材" ? "/materials" : label === "提示词库" ? "/prompts" : label === "智能创作" ? "/writing" : label === "一键排版" ? "/formatter" : label === "公众号管理" ? "/official-accounts" : "/membership"} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
-              <Image src={icon} alt={label} width={56} height={56} className="shrink-0" />
+              <Image src={icon} alt={label} width={56} height={56} className="shrink-0 tool-icon-motion" />
               <div>
                 <h3 className="font-semibold text-zinc-900 group-hover:text-teal-700 transition-colors">{label}</h3>
                 <p className="mt-1 text-sm text-zinc-400">{desc}</p>

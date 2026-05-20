@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatCommissionStatus, formatWithdrawalStatus } from "@/lib/ui/labels";
 
 export function ReferralClient() {
   const [summary, setSummary] = useState<Record<string, number|string> | null>(null);
@@ -52,7 +53,7 @@ export function ReferralClient() {
 
         {tab === "users" && <div className="space-y-2">{users.map(u => <div key={u.id} className="glass-tile px-4 py-3 flex justify-between"><span className="text-sm text-zinc-700">{u.username}</span><span className="text-xs text-zinc-400">{new Date(u.createdAt).toLocaleDateString()}</span></div>)}</div>}
 
-        {tab === "commissions" && <div className="space-y-2">{commissions.map(c => <div key={c.id} className="glass-tile px-4 py-3"><p className="text-sm text-zinc-700">¥{(c.amountCents / 100).toFixed(2)} · {c.referred?.username ?? "未知"} · {c.order?.orderNo ?? ""}</p><span className="badge-muted text-[10px]">{c.status}</span></div>)}</div>}
+        {tab === "commissions" && <div className="space-y-2">{commissions.map(c => <div key={c.id} className="glass-tile px-4 py-3"><p className="text-sm text-zinc-700">¥{(c.amountCents / 100).toFixed(2)} · {c.referred?.username ?? "未知"} · {c.order?.orderNo ?? ""}</p><span className="badge-muted text-[10px]">{formatCommissionStatus(c.status)}</span></div>)}</div>}
 
         {tab === "withdrawals" && (
           <div>
@@ -63,7 +64,7 @@ export function ReferralClient() {
               <button type="submit" className="glass-btn-primary w-full">提交提现</button>
               {msg && <p className="text-sm text-amber-600">{msg}</p>}
             </form>
-            <div className="space-y-2">{withdrawals.map(w => <div key={w.id} className="glass-tile px-4 py-3 flex justify-between items-center"><span className="text-sm text-zinc-700">¥{(w.amountCents / 100).toFixed(2)}</span><span className="text-xs text-zinc-400"><span className={w.status === "pending" ? "badge-warn" : w.status === "approved" ? "badge-ok" : "badge-muted"}>{w.status}</span> · {new Date(w.createdAt).toLocaleDateString()}</span></div>)}</div>
+            <div className="space-y-2">{withdrawals.map(w => <div key={w.id} className="glass-tile px-4 py-3 flex justify-between items-center"><span className="text-sm text-zinc-700">¥{(w.amountCents / 100).toFixed(2)}</span><span className="text-xs text-zinc-400"><span className={w.status === "pending" ? "badge-warn" : w.status === "approved" ? "badge-ok" : "badge-muted"}>{formatWithdrawalStatus(w.status)}</span> · {new Date(w.createdAt).toLocaleDateString()}</span></div>)}</div>
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatPromptSource } from "@/lib/ui/labels";
 
 type Group = { id: string; name: string };
 type Prompt = { id: string; name: string; content: string; sourceType: string; groupId: string | null; group: Group | null; config: Record<string, unknown> | null; createdAt: string; };
@@ -55,7 +56,7 @@ export function PromptList({ groupId, refreshKey, onRefresh }: { groupId: string
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium text-zinc-900 truncate">{p.name}</h3>
                     <span className={p.sourceType === "generated" ? "badge-info" : "badge-muted"}>
-                      {p.sourceType === "generated" ? "AI生成" : "手动"}
+                      {formatPromptSource(p.sourceType)}
                     </span>
                   </div>
                   {p.group && <p className="text-xs text-zinc-400 mt-0.5">{p.group.name}</p>}

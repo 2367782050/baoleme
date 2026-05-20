@@ -50,9 +50,9 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
           <div><label className="block text-sm font-medium text-zinc-700 mb-1">提示词</label>
             <select value={form.promptId} onChange={e => setForm(f => ({ ...f, promptId: e.target.value }))} className="w-full glass-input text-sm">
               <option value="">无提示词</option>{prompts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div><label className="block text-sm font-medium text-zinc-700 mb-1">来源 URL</label>
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">来源链接</label>
             <input value={form.sourceUrl} onChange={e => setForm(f => ({ ...f, sourceUrl: e.target.value }))} className="w-full glass-input text-sm" /></div>
-          <div><label className="block text-sm font-medium text-zinc-700 mb-1">参考 URL（每行一个）</label>
+          <div><label className="block text-sm font-medium text-zinc-700 mb-1">参考链接（每行一个）</label>
             <textarea value={form.referenceUrls} onChange={e => setForm(f => ({ ...f, referenceUrls: e.target.value }))} className="w-full glass-input text-sm" rows={2} /></div>
           <div className="sm:col-span-2"><label className="block text-sm font-medium text-zinc-700 mb-1">文本素材</label>
             <textarea value={form.materialText} onChange={e => setForm(f => ({ ...f, materialText: e.target.value }))} className="w-full glass-input text-sm" rows={3} placeholder="粘贴或输入参考文本素材..." /></div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { formatQuotaKey } from "@/lib/ui/labels";
 
 type DashboardData = {
   user: { username: string; email: string; role: string };
@@ -71,7 +72,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
             {/* Right: status + CTA */}
             <div className="flex flex-col items-start gap-3">
               <div className="flex items-center gap-2">
-                <span className="badge-ok">AI Ready</span>
+                <span className="badge-ok">创作引擎已就绪</span>
                 <span className="text-xs text-zinc-400">
                   {data.membership?.planName ?? "免费版"}
                 </span>
@@ -100,7 +101,7 @@ export function DashboardClient({ data }: { data: DashboardData }) {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
           {Object.entries(data.quota).map(([k, v]) => (
             <div key={k} className="glass-tile px-3 py-2.5">
-              <p className="text-[11px] text-zinc-400 truncate">{k}</p>
+              <p className="text-[11px] text-zinc-400 truncate">{formatQuotaKey(k)}</p>
               <p className="text-lg font-bold text-zinc-800">{v.remaining}<span className="text-xs text-zinc-400 font-normal">/{v.limit}</span></p>
             </div>
           ))}
@@ -108,10 +109,10 @@ export function DashboardClient({ data }: { data: DashboardData }) {
 
         {/* Tool grid — hover lift */}
         <h2 className="text-lg font-semibold text-zinc-900 mb-4">创作工具</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 motion-stagger">
           {TOOLS.map(({ icon, label, desc, href }) => (
             <Link key={label} href={href} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_24px_60px_rgba(15,23,42,0.14)] hover:-translate-y-0.5 transition-all duration-200">
-              <Image src={icon} alt={label} width={56} height={56} className="shrink-0" />
+              <Image src={icon} alt={label} width={56} height={56} className="shrink-0 tool-icon-motion" />
               <div>
                 <h3 className="font-semibold text-zinc-900 text-sm group-hover:text-teal-700 transition-colors">{label}</h3>
                 <p className="mt-0.5 text-xs text-zinc-400">{desc}</p>

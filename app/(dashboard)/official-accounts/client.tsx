@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { formatOAStatus } from "@/lib/ui/labels";
 
 type OA = { id: string; name: string; appid: string; status: string; group: { name: string } | null };
 
@@ -36,7 +37,7 @@ export function OAClient() {
           <h2 className="font-semibold text-zinc-900 mb-3">创建公众号</h2>
           <form onSubmit={handleCreate} className="flex gap-3">
             <input value={name} onChange={e => setName(e.target.value)} placeholder="公众号名称" required className="glass-input max-w-xs flex-1 text-sm" />
-            <button type="submit" className="glass-btn-primary">创建 mock 公众号</button>
+            <button type="submit" className="glass-btn-primary">创建模拟公众号</button>
           </form>
           {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
         </div>
@@ -51,7 +52,7 @@ export function OAClient() {
                 <div>
                   <p className="font-semibold text-zinc-900">{a.name}</p>
                   <p className="text-xs text-zinc-400 mt-1 font-mono">{a.appid}</p>
-                  <span className="badge-muted text-[10px] mt-1">{a.status === "mock_authorized" ? "模拟授权" : a.status}</span>
+                  <span className="badge-muted text-[10px] mt-1">{formatOAStatus(a.status)}</span>
                 </div>
                 <button onClick={() => handleDelete(a.id)} className="glass-btn-danger !text-xs !py-1 !px-3">删除</button>
               </div>

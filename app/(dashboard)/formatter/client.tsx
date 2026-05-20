@@ -52,7 +52,7 @@ export function FormatterClient() {
   }
 
   async function handleSave() { if (!articleId) { setError("没有文章 ID，无法保存"); return; } setSaving(true); setError(""); try { const r = await fetch(`/api/articles/${articleId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, markdownContent: markdown, htmlContent: html, formatterConfig: config }) }); const b = await r.json(); if (!b.success) { setError(b.error?.message ?? "保存失败"); return; } } catch { setError("网络错误"); } finally { setSaving(false); } }
-  async function handleCopy() { try { await navigator.clipboard.writeText(html); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setError("复制失败，请手动复制 HTML"); } }
+  async function handleCopy() { try { await navigator.clipboard.writeText(html); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { setError("复制失败，请手动复制排版代码"); } }
 
   if (loading) return <div className="glass-page pt-12 px-6"><div className="mx-auto max-w-6xl text-sm text-zinc-400">加载中...</div></div>;
 
@@ -65,7 +65,7 @@ export function FormatterClient() {
           <input value={title} onChange={e => setTitle(e.target.value)} placeholder="文章标题" className="glass-input w-48 text-sm !py-2" />
           <button onClick={handleRender} className="glass-btn-primary !text-sm !py-2 !px-4">预览</button>
           <button onClick={handleSave} disabled={saving || !articleId} className="glass-btn-secondary !text-sm !py-2 !px-4">{saving ? "保存中..." : "保存"}</button>
-          <button onClick={handleCopy} className="glass-btn-secondary !text-sm !py-2 !px-4">{copied ? "已复制!" : "复制 HTML"}</button>
+          <button onClick={handleCopy} className="glass-btn-secondary !text-sm !py-2 !px-4">{copied ? "已复制!" : "复制排版代码"}</button>
           {error && <span className="text-sm text-red-500">{error}</span>}
         </div>
 
