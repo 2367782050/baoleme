@@ -69,11 +69,14 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Console check (tsx)
-        run: npx tsx scripts/console-check.ts
-
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
 
+      - name: Console check (tsx)
+        run: npx tsx scripts/console-check.ts
+
       - name: Playwright E2E
         run: npm run verify:e2e
+
+      - name: Screenshots
+        run: npx tsx scripts/screenshots.ts
