@@ -42,7 +42,7 @@ export default function Home() {
               <p className="text-xs font-medium text-zinc-400 uppercase tracking-wider">产品预览</p>
               {HERO_CARDS.map(({ icon, title, desc }) => (
                 <div key={title} className="flex items-center gap-4 p-3 rounded-2xl bg-white/40">
-                  <Image src={icon} alt={title} width={44} height={44} className="shrink-0" />
+                  <Image src={icon} alt={title} width={44} height={44} className="shrink-0" unoptimized />
                   <div className="min-w-0">
                     <h3 className="text-sm font-semibold text-zinc-800">{title}</h3>
                     <p className="text-xs text-zinc-400 mt-0.5">{desc}</p>
@@ -61,7 +61,7 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 motion-stagger">
           {FEATURES.map(({ icon, label, desc }) => (
             <Link key={label} href={label === "爆款素材" ? "/materials" : label === "提示词库" ? "/prompts" : label === "智能创作" ? "/writing" : label === "一键排版" ? "/formatter" : label === "公众号管理" ? "/official-accounts" : "/membership"} className="glass-tile p-5 flex items-start gap-4 group hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)] hover:-translate-y-0.5 transition-all duration-200">
-              <Image src={icon} alt={label} width={56} height={56} className="shrink-0 tool-icon-motion" />
+              <Image src={icon} alt={label} width={56} height={56} className="shrink-0 tool-icon-motion" unoptimized />
               <div>
                 <h3 className="font-semibold text-zinc-900 group-hover:text-teal-700 transition-colors">{label}</h3>
                 <p className="mt-1 text-sm text-zinc-400">{desc}</p>

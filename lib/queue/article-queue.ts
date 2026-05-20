@@ -5,9 +5,21 @@
  * No setImmediate — the worker polls the DB independently.
  */
 
-export async function enqueueArticleGeneration(_jobId: string): Promise<void> {
-  // Job is already in DB with status "pending".
-  // The ai-worker.ts script polls and executes it.
+export async function enqueueArticleGeneration(jobId: string): Promise<void> {
+  if (process.env.AI_WORKER_EXTERNAL !== "true") {
+    const { executeArticleGenerationJob } = await import("@/lib/services/article-generation.service");
+    const { prisma } = await import("@/lib/db");
+    try {
+      await prisma.articleGenerationJob.update({
+        where: { id: jobId },
+        data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } },
+      });
+    } catch { /* already claimed */ }
+    setImmediate(async () => {
+      try { await executeArticleGenerationJob(jobId); } catch { /* error saved to DB */ }
+    });
+    return;
+  }
 }
 
 /**

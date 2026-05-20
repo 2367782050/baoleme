@@ -7,10 +7,26 @@
  * Real production should use BullMQ with Redis.
  */
 
-export async function enqueuePromptGeneration(_jobId: string): Promise<void> {
-  // Job is already in DB with status "pending".
-  // The ai-worker.ts script polls and executes it.
-  // Nothing to do here in MVP.
+export async function enqueuePromptGeneration(jobId: string): Promise<void> {
+  // Default: inline execution (setImmediate).
+  // In production with standalone worker, set AI_WORKER_EXTERNAL=true
+  // and the job will be picked up by scripts/ai-worker.ts from the DB.
+  if (process.env.AI_WORKER_EXTERNAL !== "true") {
+    const { executeGenerationJob } = await import("@/lib/services/prompt-generation.service");
+    // Mark as running before executing
+    const { prisma } = await import("@/lib/db");
+    try {
+      await prisma.promptGenerationJob.update({
+        where: { id: jobId },
+        data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } },
+      });
+    } catch { /* already claimed */ }
+    setImmediate(async () => {
+      try { await executeGenerationJob(jobId); } catch { /* error saved to DB */ }
+    });
+    return;
+  }
+  // External worker mode: job is pending in DB, worker polls and executes.
 }
 
 /**
