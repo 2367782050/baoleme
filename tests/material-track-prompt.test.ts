@@ -4,7 +4,6 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { PrismaClient } from "../lib/generated/prisma/client.js";
-import type { MaterialArticle, PromptGenerationJob, Prompt } from "../lib/generated/prisma/client.js";
 import { importFromPaste, importFromUrl, importFromThirdParty, DuplicateMaterialError, ValidationError, queryImportedArticles } from "../lib/services/material-import.service.js";
 import { createTrackPromptJob } from "../lib/services/material-track-prompt.service.js";
 import { executeGenerationJob, getGenerationJob } from "../lib/services/prompt-generation.service.js";
@@ -13,8 +12,8 @@ import bcrypt from "bcryptjs";
 let prisma: PrismaClient;
 let userId: string;
 let domainId: string;
-let domainId2: string;
-let articleIds: string[] = [];
+const articleIds: string[] = [];
+articleIds; // used for cleanup
 
 beforeAll(async () => {
   const { prisma: p } = await import("../lib/db/index.js");
@@ -44,9 +43,8 @@ beforeAll(async () => {
 
   // Get domains from seed
   const domains = await prisma.materialDomain.findMany({ take: 2, where: { parentId: null } });
-  if (domains.length < 2) throw new Error("Need at least 2 domains in seed data");
+  if (domains.length < 1) throw new Error("Need at least 1 domain in seed data");
   domainId = domains[0].id;
-  domainId2 = domains[1].id;
 });
 
 afterAll(async () => {
