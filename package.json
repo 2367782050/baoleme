@@ -24,7 +24,8 @@
     "verify:all": "node scripts/verify.mjs all",
     "verify:ai": "tsx scripts/verify-ai.ts",
     "verify:ai:e2e": "tsx scripts/verify-ai-e2e.ts",
-    "worker:ai": "tsx scripts/ai-worker.ts"
+    "worker:ai": "tsx scripts/ai-worker.ts",
+    "preflight:prod": "tsx scripts/preflight-prod.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

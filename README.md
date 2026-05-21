@@ -173,5 +173,20 @@ Playwright 验收建议使用 `npm run verify:e2e`。该脚本会先清理 3000 
 - 设置 `JWT_SECRET` 为强随机字符串
 - 设置 `NODE_ENV=production`（Cookie secure 自动开启）
 - 替换 MockAIProvider 为真实 AI Provider
-- 队列替换为 BullMQ + Redis
 - 部署前运行 `npm run build`
+
+详细部署指南：`docs/21-production-trial.md`
+
+```bash
+npm run preflight:prod     # 环境检查
+npm run build              # 构建
+npm run start              # Web 服务
+npm run worker:ai          # AI Worker (另一终端)
+```
+
+### 安全注意事项
+
+- 默认管理员 `admin/admin123` 仅用于本地开发，试用前必须修改
+- `JWT_SECRET` 必须为强随机字符串（`openssl rand -hex 32`）
+- Mock 支付/公众号/提现在页面中有标注，不产生真实交易/打款
+- 不要在 git 中提交 `.env`、API Key
