@@ -25,7 +25,9 @@
     "verify:ai": "tsx scripts/verify-ai.ts",
     "verify:ai:e2e": "tsx scripts/verify-ai-e2e.ts",
     "worker:ai": "tsx scripts/ai-worker.ts",
-    "preflight:prod": "tsx scripts/preflight-prod.ts"
+    "preflight:prod": "tsx scripts/preflight-prod.ts",
+    "trial:check": "tsx scripts/trial-check.ts",
+    "trial:start": "tsx scripts/trial-start.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

@@ -34,6 +34,17 @@ npm run dev
 # 管理员: admin / admin123
 ```
 
+## 本机试用包 (一键启动)
+
+```bash
+npm install
+cp .env.example .env       # 编辑配置
+npm run trial:check         # 环境检查
+npm run trial:start         # 一键启动 Web + Worker
+```
+
+详见 [`docs/22-local-trial-package.md`](docs/22-local-trial-package.md)。
+
 ## 替代方案：Prisma dev (动态端口，不推荐长期使用)
 
 ```bash
