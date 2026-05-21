@@ -116,4 +116,64 @@ export interface AIProvider {
   generateArticle(input: GenerateArticleInput): Promise<{ result: GenerateArticleResult; usage: TokenUsage }>;
   reviewArticle(input: ReviewArticleInput): Promise<{ result: ReviewArticleResult; usage: TokenUsage }>;
   rewriteArticle(input: RewriteArticleInput): Promise<{ result: RewriteArticleResult; usage: TokenUsage }>;
+  generateTrackPrompt(input: GenerateTrackPromptInput): Promise<{ result: GenerateTrackPromptResult; usage: TokenUsage }>;
 }
+
+// ─── Track Prompt (Phase 23) ─────────────────────────────────
+
+export type TrackPromptArticleInput = {
+  id: string;
+  title: string;
+  sourceUrl?: string | null;
+  summary?: string | null;
+  fullContent: string;
+  readCount?: number;
+  likeCount?: number;
+  publishedAt?: string | null;
+};
+
+export type GenerateTrackPromptInput = {
+  name: string;
+  domainName: string;
+  targetAudience: string;
+  authorPersona: string;
+  articles: TrackPromptArticleInput[];
+  userNotes?: string;
+};
+
+export type MaterialArticleAnalysis = {
+  titlePatterns: string[];
+  openingHooks: string[];
+  emotionalTriggers: string[];
+  structurePatterns: string[];
+  materialUsage: string[];
+  goldenSentences: string[];
+  riskNotes: string[];
+  doNotCopy: string[];
+};
+
+export type GenerateTrackPromptResult = {
+  name: string;
+  summary: string;
+  content: string;
+  articleAnalyses: Array<{
+    articleId: string;
+    title: string;
+    analysis: MaterialArticleAnalysis;
+  }>;
+  trackInsights: {
+    commonTitlePatterns: string[];
+    commonOpenings: string[];
+    commonStructures: string[];
+    commonEmotions: string[];
+    readerPainPoints: string[];
+    reusableAngles: string[];
+    forbiddenRules: string[];
+  };
+  recommendedInputs: string[];
+  titleRules: string[];
+  structureRules: string[];
+  styleRules: string[];
+  materialRules: string[];
+  forbiddenRules: string[];
+};

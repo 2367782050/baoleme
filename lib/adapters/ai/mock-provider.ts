@@ -10,6 +10,8 @@ import type {
   ReviewArticleResult,
   RewriteArticleInput,
   RewriteArticleResult,
+  GenerateTrackPromptInput,
+  GenerateTrackPromptResult,
   TokenUsage,
 } from "./types";
 
@@ -270,6 +272,45 @@ export class MockAIProvider implements AIProvider {
 ${input.imageCount > 0 ? input.imageCount > 0 ? Array.from({ length: input.imageCount }, (_, i) => `![配图${i + 1}](image-slot://${i + 1})`).join("\n\n") : "" : ""}
 
 > 本文内容仅供参考，具体决策请结合实际情况。`;
+  }
+
+  async generateTrackPrompt(input: GenerateTrackPromptInput): Promise<{ result: GenerateTrackPromptResult; usage: TokenUsage }> {
+    if (this.failNext) { this.failNext = false; throw new Error("Mock AI failure: track prompt generation"); }
+    const articleAnalyses = input.articles.map((a) => ({
+      articleId: a.id, title: a.title,
+      analysis: {
+        titlePatterns: ["数字型标题", "疑问句式"],
+        openingHooks: ["数据开场", "悬念设问"],
+        emotionalTriggers: ["焦虑感", "获得感"],
+        structurePatterns: ["总-分-总", "并列列举"],
+        materialUsage: ["引用研究数据", "案例对比"],
+        goldenSentences: ["金句示例1", "金句示例2"],
+        riskNotes: ["避免过度承诺", "数据需核实"],
+        doNotCopy: ["不可直接复制原文结构"],
+      },
+    }));
+    const result: GenerateTrackPromptResult = {
+      name: input.name,
+      summary: `基于${input.articles.length}篇${input.domainName}爆款文章的赛道统一提示词`,
+      content: `【赛道提示词】\n领域：${input.domainName}\n目标读者：${input.targetAudience}\n作者人设：${input.authorPersona}\n\n## 标题规则\n- 数字型标题优先\n- 使用疑问句式\n\n## 结构\n- 总-分-总布局\n\n## 风格\n- 数据驱动\n- 理性克制\n\n## 素材使用\n- 引用权威数据\n- 案例对比\n\n## 禁止\n- 不保证收益\n- 不制造焦虑`,
+      articleAnalyses,
+      trackInsights: {
+        commonTitlePatterns: ["数字型", "疑问句"],
+        commonOpenings: ["数据", "悬念"],
+        commonStructures: ["总-分-总"],
+        commonEmotions: ["焦虑", "获得"],
+        readerPainPoints: ["信息不对称", "决策困难"],
+        reusableAngles: ["趋势分析", "案例拆解"],
+        forbiddenRules: ["不保证收益", "不制造恐慌"],
+      },
+      recommendedInputs: ["行业数据", "案例链接"],
+      titleRules: ["数字型优先", "不超过25字"],
+      structureRules: ["开头引共鸣", "中间给干货", "结尾促行动"],
+      styleRules: ["口语化", "数据引用"],
+      materialRules: ["引用标注来源", "案例脱敏"],
+      forbiddenRules: ["不保证收益", "不承诺确定性"],
+    };
+    return { result, usage: { promptTokens: 100, completionTokens: 200, totalTokens: 300 } };
   }
 }
 

@@ -57,6 +57,7 @@ model User {
   auditLogs           AuditLog[]
   usedMembershipCodes MembershipCode[] @relation("UsedMembershipCodes")
   files               File[]
+  importedArticles    MaterialArticle[]  @relation("ImportedArticles")
 
   @@map("users")
 }
@@ -187,26 +188,37 @@ model MaterialAccount {
 }
 
 model MaterialArticle {
-  id             String   @id @default(uuid()) @db.Uuid
-  platform       String   @db.VarChar(50)
-  accountId      String?  @map("account_id") @db.Uuid
-  domainId       String?  @map("domain_id") @db.Uuid
-  title          String   @db.VarChar(500)
-  sourceUrl      String?  @map("source_url") @db.Text
-  summary        String?  @db.Text
-  contentExcerpt String?  @map("content_excerpt") @db.Text
-  coverUrl       String?  @map("cover_url") @db.Text
-  readCount      Int      @default(0) @map("read_count")
-  likeCount      Int      @default(0) @map("like_count")
-  commentCount   Int      @default(0) @map("comment_count")
-  publishedAt    DateTime? @map("published_at") @db.Timestamptz()
-  sourceProvider String   @default("seed") @map("source_provider") @db.VarChar(50)
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  id                      String   @id @default(uuid()) @db.Uuid
+  platform                String   @db.VarChar(50)
+  accountId               String?  @map("account_id") @db.Uuid
+  domainId                String?  @map("domain_id") @db.Uuid
+  title                   String   @db.VarChar(500)
+  sourceUrl               String?  @map("source_url") @db.Text
+  summary                 String?  @db.Text
+  contentExcerpt          String?  @map("content_excerpt") @db.Text
+  fullContent             String?  @map("full_content") @db.Text
+  contentHash             String?  @map("content_hash") @db.VarChar(64)
+  contentLength           Int      @default(0) @map("content_length")
+  coverUrl                String?  @map("cover_url") @db.Text
+  readCount               Int      @default(0) @map("read_count")
+  likeCount               Int      @default(0) @map("like_count")
+  commentCount            Int      @default(0) @map("comment_count")
+  publishedAt             DateTime? @map("published_at") @db.Timestamptz()
+  sourceProvider          String   @default("seed") @map("source_provider") @db.VarChar(50)
+  importSource            String   @default("seed") @map("import_source") @db.VarChar(30)
+  importedByUserId        String?  @map("imported_by_user_id") @db.Uuid
+  aiSuggestedDomainId     String?  @map("ai_suggested_domain_id") @db.Uuid
+  aiSuggestedDomainName   String?  @map("ai_suggested_domain_name") @db.VarChar(100)
+  aiSuggestedDomainConfidence Float? @map("ai_suggested_domain_confidence")
+  analysis                Json?    @map("analysis_json") @db.JsonB
+  createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt               DateTime @updatedAt @map("updated_at") @db.Timestamptz()
 
-  account MaterialAccount? @relation(fields: [accountId], references: [id])
-  domain  MaterialDomain?  @relation(fields: [domainId], references: [id])
+  account     MaterialAccount? @relation(fields: [accountId], references: [id])
+  domain      MaterialDomain?  @relation(fields: [domainId], references: [id])
+  importedBy  User?            @relation("ImportedArticles", fields: [importedByUserId], references: [id])
 
+  @@unique([importedByUserId, contentHash])
   @@map("material_articles")
 }
 
@@ -254,15 +266,17 @@ model PromptGroup {
 }
 
 model Prompt {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  groupId    String?  @map("group_id") @db.Uuid
-  name       String   @db.VarChar(200)
-  content    String   @db.Text
-  sourceType String   @default("manual") @map("source_type") @db.VarChar(30) // manual / generated
-  config     Json?    @db.JsonB
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz()
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  groupId    String?   @map("group_id") @db.Uuid
+  name       String    @db.VarChar(200)
+  content    String    @db.Text
+  sourceType String    @default("manual") @map("source_type") @db.VarChar(30)
+  visibility String    @default("private") @map("visibility") @db.VarChar(20)
+  publishedAt DateTime? @map("published_at") @db.Timestamptz()
+  config     Json?     @db.JsonB
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz()
 
   user  User        @relation(fields: [userId], references: [id])
   group PromptGroup? @relation(fields: [groupId], references: [id])

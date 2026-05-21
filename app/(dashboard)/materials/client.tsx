@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { TrackDeconstruction } from "@/components/feature/materials/TrackDeconstruction";
 
 type Account = { id: string; platform: string; name: string; avatarUrl: string|null; domainName: string|null; avgTopReadCount: number; avgReadCount: number; postCountDaily: number|string; likeCountTotal: number; originalIndex: number|string; rank: number; isFavorited: boolean; };
 type Topic = { id: string; platform: string; title: string; url: string | null; rank: number; heatScore: number | string; snapshotAt: string; };
@@ -11,7 +12,7 @@ const TABS = [
   { key: "accounts", label: "公众号榜单" },
   { key: "topics", label: "热搜榜" },
   { key: "articles", label: "文章素材" },
-  { key: "guide", label: "如何找对标" },
+  { key: "guide", label: "如何找对标" }, { key: "deconstruct", label: "爆文拆解" },
 ] as const;
 
 export function MaterialsClient() {
@@ -244,6 +245,8 @@ export function MaterialsClient() {
             </div>
           </div>
         )}
+
+        {activeTab === "deconstruct" && <TrackDeconstruction />}
       </div>
     </div>
   );

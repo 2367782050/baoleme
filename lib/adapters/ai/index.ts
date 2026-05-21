@@ -10,6 +10,8 @@ export type {
   ReviewArticleResult,
   RewriteArticleInput,
   RewriteArticleResult,
+  GenerateTrackPromptInput,
+  GenerateTrackPromptResult,
   TokenUsage,
 } from "./types";
 

@@ -51,6 +51,7 @@ const COMMISSION_STATUS: Record<string, string> = {
 const PROMPT_SOURCE: Record<string, string> = {
   generated: "智能生成",
   manual: "手动创建",
+  material_track_generated: "爆文拆解生成",
 };
 
 // ─── 公众号授权状态 ────────────────────────────────────────────

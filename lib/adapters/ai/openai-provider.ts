@@ -10,6 +10,8 @@ import type {
   ReviewArticleResult,
   RewriteArticleInput,
   RewriteArticleResult,
+  GenerateTrackPromptInput,
+  GenerateTrackPromptResult,
   TokenUsage,
 } from "./types";
 
@@ -216,6 +218,71 @@ ${input.userNotes}
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  async generateTrackPrompt(input: GenerateTrackPromptInput): Promise<{ result: GenerateTrackPromptResult; usage: TokenUsage }> {
+    const systemPrompt = `你是资深中文公众号内容策略师和赛道拆解专家。
+任务：分析 ${input.articles.length} 篇「${input.domainName}」赛道的爆款文章，提取共性规律，生成一个可复用的赛道级写作提示词。
+
+流程：
+1. 逐篇拆解每篇文章的标题、开头、情绪钩子、结构、素材用法、金句
+2. 找出共性规律（标题模式、开头方式、结构、情绪、读者痛点）
+3. 输出一个完整的赛道提示词（面向作者：${input.authorPersona}，面向读者：${input.targetAudience}）
+
+必须遵守：
+1. 所有分析基于原文，不编造
+2. 通用规律要可操作，不要太抽象
+3. 禁止规则要明确，可检查
+4. 输出合法 JSON，开头直接 {，不要加解释或 Markdown 代码块`;
+
+    const articlesJson = JSON.stringify(input.articles.map((a) => ({
+      id: a.id, title: a.title, fullContent: a.fullContent.substring(0, 3000),
+      readCount: a.readCount, likeCount: a.likeCount,
+    })));
+
+    const userPrompt = `分析以下 ${input.articles.length} 篇「${input.domainName}」赛道的爆款文章，生成赛道提示词。
+
+文章列表：
+${articlesJson}
+
+提示词名称：${input.name}
+目标读者：${input.targetAudience}
+作者人设：${input.authorPersona}
+${input.userNotes ? `用户补充：${input.userNotes}` : ""}
+
+请输出 JSON（所有 text 字段必须使用中文）：
+{
+  "name": "提示词名称",
+  "summary": "赛道提示词摘要，80字",
+  "content": "完整提示词正文",
+  "articleAnalyses": [{ "articleId": "...", "title": "...", "analysis": { "titlePatterns": [], "openingHooks": [], "emotionalTriggers": [], "structurePatterns": [], "materialUsage": [], "goldenSentences": [], "riskNotes": [], "doNotCopy": [] } }],
+  "trackInsights": { "commonTitlePatterns": [], "commonOpenings": [], "commonStructures": [], "commonEmotions": [], "readerPainPoints": [], "reusableAngles": [], "forbiddenRules": [] },
+  "recommendedInputs": [], "titleRules": [], "structureRules": [], "styleRules": [], "materialRules": [], "forbiddenRules": []
+}`;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    try {
+      const res = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.apiKey}` },
+        body: JSON.stringify({ model: this.model, messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }], temperature: 0.7, max_tokens: 8192 }),
+        signal: controller.signal,
+      });
+      if (!res.ok) throw await this.handleResponse(res);
+      const body = await res.json();
+      let raw = (body.choices?.[0]?.message?.content ?? "").trim();
+      if (!raw) throw this.aiError("AI 未返回有效结果，请重试");
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) raw = jsonMatch[0];
+      let result: GenerateTrackPromptResult;
+      try { result = JSON.parse(raw) as GenerateTrackPromptResult; } catch { throw this.aiError("AI 返回格式异常，请重试"); }
+      return { result, usage: { promptTokens: body.usage?.prompt_tokens ?? 0, completionTokens: body.usage?.completion_tokens ?? 0, totalTokens: body.usage?.total_tokens ?? 0 } };
+    } catch (e) {
+      if (e instanceof Error && (e as unknown as Record<string,unknown>).code === "AI_PROVIDER_ERROR") throw e;
+      if ((e as Error).name === "AbortError") throw this.aiError(`AI 调用超时（${this.timeoutMs}ms），请检查网络或增加超时时间`);
+      throw this.aiError("AI 调用失败，请检查网络连接和 API 配置", e);
+    } finally { clearTimeout(timer); }
   }
 }
 
