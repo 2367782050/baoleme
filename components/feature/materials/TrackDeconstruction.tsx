@@ -32,13 +32,16 @@ export function TrackDeconstruction() {
   const [gpPersona, setGpPersona] = useState("");
   const [gpNotes, setGpNotes] = useState("");
   const [gpGroupId, setGpGroupId] = useState("");
+  const [groups, setGroups] = useState<{ id: string; name: string }[]>([]);
   const [jobId, setJobId] = useState<string | null>(null);
   const [jobStatus, setJobStatus] = useState("");
   const [genError, setGenError] = useState("");
 
   useEffect(() => {
     fetch("/api/material/domains").then(r => r.json()).then(b => { if (b.success) setDomains(b.data); }).catch(() => {});
+    fetch("/api/prompts/groups").then(r => r.json()).then(b => { if (b.success) setGroups(b.data); }).catch(() => {});
     refreshArticles();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterDomain]);
 
   async function refreshArticles() {
@@ -173,6 +176,7 @@ export function TrackDeconstruction() {
               <input value={gpName} onChange={e => setGpName(e.target.value)} placeholder="提示词名称" required className="glass-input text-sm" />
               <select value={gpGroupId} onChange={e => setGpGroupId(e.target.value)} className="glass-input text-sm">
                 <option value="">无分组</option>
+                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
               </select>
               <input value={gpAudience} onChange={e => setGpAudience(e.target.value)} placeholder="目标读者" required className="glass-input text-sm" />
               <input value={gpPersona} onChange={e => setGpPersona(e.target.value)} placeholder="作者人设" required className="glass-input text-sm" />

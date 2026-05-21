@@ -14,6 +14,10 @@ export class DuplicateMaterialError extends Error {
   constructor(message = "你已经导入过相同内容的文章") { super(message); this.name = "DuplicateMaterialError"; }
 }
 
+export class ValidationError extends Error {
+  constructor(message: string) { super(message); this.name = "ValidationError"; }
+}
+
 export type ImportPasteInput = {
   title: string;
   content: string;
@@ -31,11 +35,11 @@ export type ImportUrlInput = {
 };
 
 export async function importFromPaste(userId: string, input: ImportPasteInput) {
-  if (!input.title || input.title.length < 2 || input.title.length > 200) throw new Error("标题长度需在 2-200 字之间");
-  if (!input.content || input.content.length < 30) throw new Error("内容太短，至少需要 30 字");
+  if (!input.title || input.title.length < 2 || input.title.length > 200) throw new ValidationError("标题长度需在 2-200 字之间");
+  if (!input.content || input.content.length < 300) throw new ValidationError("正文内容太少，至少需要 300 字");
 
   const domain = await prisma.materialDomain.findUnique({ where: { id: input.domainId } });
-  if (!domain) throw new Error("赛道不存在");
+  if (!domain) throw new ValidationError("赛道不存在");
 
   const hash = hashContent(input.content);
   const existing = await prisma.materialArticle.findFirst({
@@ -57,14 +61,18 @@ export async function importFromPaste(userId: string, input: ImportPasteInput) {
       sourceProvider: "seed",
       importSource: "paste",
       importedByUserId: userId,
+      // AI suggested domain: use user-selected domain as baseline
+      aiSuggestedDomainId: domain.id,
+      aiSuggestedDomainName: domain.name,
+      aiSuggestedDomainConfidence: 0.8,
     },
   });
 }
 
 export async function importFromUrl(userId: string, input: ImportUrlInput) {
-  if (!input.domainId) throw new Error("请选择赛道");
+  if (!input.domainId) throw new ValidationError("请选择赛道");
   const domain = await prisma.materialDomain.findUnique({ where: { id: input.domainId } });
-  if (!domain) throw new Error("赛道不存在");
+  if (!domain) throw new ValidationError("赛道不存在");
 
   let html: string;
   try {
@@ -72,11 +80,10 @@ export async function importFromUrl(userId: string, input: ImportUrlInput) {
     if (!res.ok) throw new Error(`抓取失败: HTTP ${res.status}`);
     html = await res.text();
   } catch (e) {
-    if ((e as Error).name === "TimeoutError") throw new Error("URL 抓取超时，请检查链接是否可访问");
+    if ((e as Error).name === "TimeoutError") throw new ValidationError("URL 抓取超时，请检查链接是否可访问");
     throw new Error(`URL 抓取失败: ${(e as Error).message}`);
   }
 
-  // Basic text extraction
   const title = input.title ?? (html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim()) ?? "未命名文章";
   const content = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
@@ -84,7 +91,7 @@ export async function importFromUrl(userId: string, input: ImportUrlInput) {
     .replace(/\s+/g, " ")
     .trim();
 
-  if (content.length < 50) throw new Error("无法提取到足够内容，请尝试粘贴全文");
+  if (content.length < 300) throw new ValidationError("无法提取到足够内容（需至少 300 字），请尝试粘贴全文");
 
   const hash = hashContent(content);
   const existing = await prisma.materialArticle.findFirst({
@@ -106,12 +113,15 @@ export async function importFromUrl(userId: string, input: ImportUrlInput) {
       sourceProvider: "seed",
       importSource: "url",
       importedByUserId: userId,
+      aiSuggestedDomainId: domain.id,
+      aiSuggestedDomainName: domain.name,
+      aiSuggestedDomainConfidence: 0.8,
     },
   });
 }
 
 export function importFromThirdParty(): never {
-  throw new Error("第三方数据接口暂未配置");
+  throw new ValidationError("第三方数据接口暂未配置");
 }
 
 export async function queryImportedArticles(userId: string, params: { domainId?: string; keyword?: string; page?: number; pageSize?: number }) {

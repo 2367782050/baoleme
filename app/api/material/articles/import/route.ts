@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { importFromPaste, importFromUrl, importFromThirdParty, DuplicateMaterialError } from "@/lib/services/material-import.service";
+import { importFromPaste, importFromUrl, importFromThirdParty, DuplicateMaterialError, ValidationError } from "@/lib/services/material-import.service";
 import { ok, err, unauthorized } from "@/lib/utils/api-response";
 
 export async function POST(req: NextRequest) {
@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
       return ok(article);
     }
 
-    // Default: paste
     const article = await importFromPaste(session.userId, {
       title: body.title as string,
       content: body.content as string,
@@ -34,8 +33,9 @@ export async function POST(req: NextRequest) {
     });
     return ok(article);
   } catch (e) {
-    if (e instanceof DuplicateMaterialError) return err("DUPLICATE", e.message);
+    if (e instanceof ValidationError) return err("VALIDATION_ERROR", e.message, undefined, 400);
+    if (e instanceof DuplicateMaterialError) return err("DUPLICATE", e.message, undefined, 409);
     if (e instanceof Error && (e as { code?: string }).code === "UNAUTHORIZED") return unauthorized();
-    return err("INTERNAL_ERROR", (e as Error).message ?? "导入失败", undefined, 500);
+    return err("INTERNAL_ERROR", "导入失败", undefined, 500);
   }
 }

@@ -22,7 +22,10 @@ export async function POST(req: NextRequest) {
     await enqueuePromptGeneration(job.id);
     return ok({ jobId: job.id, status: job.status });
   } catch (e) {
+    if (e instanceof Error && e.message && (e.message.includes("至少需要") || e.message.includes("最多只能") || e.message.includes("不存在") || e.message.includes("没有全文"))) {
+      return err("VALIDATION_ERROR", e.message, undefined, 400);
+    }
     if (e instanceof Error && (e as { code?: string }).code === "UNAUTHORIZED") return unauthorized();
-    return err("INTERNAL_ERROR", (e as Error).message ?? "创建失败", undefined, 500);
+    return err("INTERNAL_ERROR", "创建失败", undefined, 500);
   }
 }
