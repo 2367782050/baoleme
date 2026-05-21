@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { PrismaClient } from "../lib/generated/prisma/client.js";
-import { importFromPaste, importFromUrl, importFromThirdParty, DuplicateMaterialError, ValidationError, queryImportedArticles } from "../lib/services/material-import.service.js";
+import { importFromPaste, importFromUrl, importFromThirdParty, DuplicateMaterialError, queryImportedArticles } from "../lib/services/material-import.service.js";
 import { createTrackPromptJob } from "../lib/services/material-track-prompt.service.js";
 import { executeGenerationJob, getGenerationJob } from "../lib/services/prompt-generation.service.js";
 import bcrypt from "bcryptjs";
@@ -13,7 +13,7 @@ let prisma: PrismaClient;
 let userId: string;
 let domainId: string;
 const articleIds: string[] = [];
-articleIds; // used for cleanup
+void (articleIds as unknown); // referenced in afterAll cleanup
 
 beforeAll(async () => {
   const { prisma: p } = await import("../lib/db/index.js");
@@ -112,7 +112,7 @@ describe("material-import.service", () => {
   });
 
   it("queryImportedArticles returns articles for user", async () => {
-    const { items, total } = await queryImportedArticles(userId, {});
+    const { total } = await queryImportedArticles(userId, {});
     // Should have at least the articles from the successful import tests
     if (total === 0) {
       // Import one to verify the query works
