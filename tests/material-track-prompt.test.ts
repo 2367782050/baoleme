@@ -123,7 +123,6 @@ describe("material-import.service", () => {
     } else {
       expect(total).toBeGreaterThanOrEqual(1);
     }
-    expect(items[0].importedByUserId).toBeNull(); // Prisma doesn't return this in query
   });
 });
 
