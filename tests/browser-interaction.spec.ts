@@ -155,9 +155,9 @@ test("materials: favorite changes row state and export downloads CSV content", a
   await expect(row.getByRole("button", { name: "已收藏" })).toBeVisible({ timeout: 5000 });
 
   // Switch to topics tab and verify topics are displayed
-  await page.locator("button:has-text('热搜榜')").click();
+  await page.locator("button:has-text('今日热搜')").click();
   await page.waitForTimeout(500);
-  await expect(page.getByRole("heading", { name: "热搜榜" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "今日热搜" })).toBeVisible();
   // CSV export is part of the material API — verify API works
   const cookie = await browserSessionCookie(page, user.userId);
   const exportRes = await page.request.post(`${BASE}/api/material/export`, {
@@ -188,7 +188,7 @@ test("prompts: create group, generate prompt, verify new prompt appears", async 
   const nameInput = page.locator("input[placeholder*='财经']").first();
   await expect(nameInput).toBeVisible({ timeout: 3000 });
   await nameInput.fill(promptName);
-  await page.click("button:has-text('开始生成')");
+  await page.click("button:has-text('生成专属提示词')");
   await expect(page.getByText(promptName).first()).toBeVisible({ timeout: 15000 });
 });
 
@@ -196,10 +196,10 @@ test("writing: create article, verify exact title appears with scoped status", a
   const user = await createUser(page, "wrt");
   await loginAs(page, user.username, user.password);
   await page.goto(`${BASE}/writing`);
-  await expect(page.getByRole("heading", { name: "智能创作" })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole("heading", { name: "文章生产管理台" })).toBeVisible({ timeout: 5000 });
 
   const articleTitle = `浏览器文章_${Date.now().toString(36)}`;
-  await page.click("button:has-text('开始创作')");
+  await page.click("button:has-text('新建文章')");
   await expect(page.locator("input[required]").first()).toBeVisible({ timeout: 3000 });
   const cookie = await browserSessionCookie(page, user.userId);
   const authCheck = await page.request.get(`${BASE}/api/auth/me`, { headers: { Cookie: cookie } });
@@ -216,10 +216,10 @@ test("writing: create article, verify exact title appears with scoped status", a
 
   await waitForArticleById(page, articleId, cookie);
   await page.goto(`${BASE}/writing`);
-  await page.locator("input[placeholder='搜索...']").fill(articleTitle);
+  await page.locator("input[placeholder='搜索标题...']").fill(articleTitle);
   const articleRow = page.locator(`[data-testid='article-row-${articleId}']`);
   await expect(articleRow).toBeVisible({ timeout: 20000 });
-  await expect(articleRow.locator("[data-testid^='article-status-']")).toHaveText(/创作中|已完成|失败/, { timeout: 5000 });
+  await expect(articleRow.locator("[data-testid^='article-status-']")).toHaveText(/生产中|已完成|失败/, { timeout: 5000 });
 });
 
 test("formatter: edit markdown, preview shows rendered HTML, copy button active", async ({ page }) => {

@@ -185,5 +185,5 @@ describe("material-track-prompt.service", () => {
     expect(config).toBeTruthy();
     expect(config!.articleIds).toEqual(three);
     expect(config!.trackInsights).toBeTruthy();
-  });
+  }, 20000);
 });

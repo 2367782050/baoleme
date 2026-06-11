@@ -25,6 +25,8 @@
     "verify:ai": "tsx scripts/verify-ai.ts",
     "verify:ai:e2e": "tsx scripts/verify-ai-e2e.ts",
     "worker:ai": "tsx scripts/ai-worker.ts",
+    "worker:content": "tsx scripts/content-worker.ts",
+    "verify:content-sources": "vitest run tests/content-sources.test.ts",
     "preflight:prod": "tsx scripts/preflight-prod.ts",
     "trial:check": "tsx scripts/trial-check.ts",
     "trial:start": "tsx scripts/trial-start.ts"
@@ -40,6 +42,7 @@
     "prisma": "^7.8.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "rss-parser": "^3.13.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

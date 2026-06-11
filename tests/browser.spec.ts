@@ -67,7 +67,7 @@ test.describe("Dashboard pages (as admin)", () => {
   test("materials page has tabs", async ({ page }) => {
     await page.goto(`${BASE}/materials`);
     await expect(page.getByRole("heading", { name: "爆款素材" })).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("热搜榜")).toBeVisible();
+    await expect(page.getByRole("button", { name: "今日热搜" })).toBeVisible();
     await expect(page.getByText("如何找对标")).toBeVisible();
   });
 

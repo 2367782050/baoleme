@@ -90,7 +90,7 @@ test.describe("Console errors across all pages", () => {
 
     // Interactions
     await page.goto(`${BASE}/materials`, { waitUntil: "networkidle" });
-    await page.locator("button:has-text('热搜榜')").click().catch(() => {});
+    await page.locator("button:has-text('今日热搜')").click().catch(() => {});
     await page.waitForTimeout(300);
 
     await page.goto(`${BASE}/formatter`, { waitUntil: "networkidle" });

@@ -248,6 +248,22 @@ model Favorite {
   @@map("favorites")
 }
 
+model ContentIngestionRun {
+  id            String    @id @default(uuid()) @db.Uuid
+  source        String    @db.VarChar(50)
+  status        String    @default("running") @db.VarChar(20) // running / completed / failed
+  articlesFound Int       @default(0) @map("articles_found")
+  articlesNew   Int       @default(0) @map("articles_new")
+  articlesDup   Int       @default(0) @map("articles_dup")
+  errorMessage  String?   @map("error_message") @db.Text
+  startedAt     DateTime? @map("started_at") @db.Timestamptz()
+  completedAt   DateTime? @map("completed_at") @db.Timestamptz()
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+
+  @@index([source, createdAt(sort: Desc)])
+  @@map("content_ingestion_runs")
+}
+
 // ─── 4. Prompts ───────────────────────────────────────────────────
 
 model PromptGroup {

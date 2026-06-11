@@ -58,7 +58,7 @@ export async function executeGenerationJob(jobId: string): Promise<void> {
       const prompt = await prisma.prompt.create({
         data: {
           userId: job.userId, groupId: job.groupId,
-          name: result.name, content: result.content,
+          name: (inp.name as string) || result.name, content: result.content,
           sourceType: "material_track_generated",
           visibility: "private",
           config: {
@@ -90,7 +90,7 @@ export async function executeGenerationJob(jobId: string): Promise<void> {
     const prompt = await prisma.prompt.create({
       data: {
         userId: job.userId, groupId: job.groupId,
-        name: result.name, content: result.content,
+        name: promptInput.name || result.name, content: result.content,
         sourceType: "generated",
         config: {
           summary: result.summary, recommendedInputs: result.recommendedInputs,

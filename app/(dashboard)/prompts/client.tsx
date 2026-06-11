@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { GenerateForm } from "@/components/feature/prompts/GenerateForm";
 import { GroupList } from "@/components/feature/prompts/GroupList";
 import { PromptList } from "@/components/feature/prompts/PromptList";
-import { GenerateForm } from "@/components/feature/prompts/GenerateForm";
 
 type Group = { id: string; name: string; description: string | null };
 
@@ -21,48 +21,53 @@ export function PromptsClient() {
       if (!cancelled && body.success) setGroups(body.data);
     }
     load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [refreshKey]);
 
   return (
-    <div className="glass-page depth-page pt-6 pb-20 px-6">
+    <div className="glass-page depth-page px-6 pb-20 pt-6">
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">提示词库</h1>
-            <p className="text-sm text-zinc-500 mt-1">管理你的 AI 提示词，生成高分创作指令</p>
+            <p className="mt-1 text-sm text-zinc-500">投喂爆文素材生成专属提示词，沉淀可复用的创作指令。</p>
           </div>
           <button onClick={() => setShowGenerate(!showGenerate)} className="glass-btn-primary">
-            {showGenerate ? "关闭生成" : "生成提示词"}
+            {showGenerate ? "关闭生成" : "投喂素材生成提示词"}
           </button>
         </div>
 
         {showGenerate && (
-          <div className="glass-card p-6 mb-6 depth-drawer">
+          <div className="glass-card depth-drawer mb-6 p-6">
             <GenerateForm
               groups={groups}
-              onSuccess={() => { setRefreshKey(k => k + 1); setShowGenerate(false); }}
+              onSuccess={() => {
+                setRefreshKey((key) => key + 1);
+                setShowGenerate(false);
+              }}
             />
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          <div className="lg:w-56 shrink-0">
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="shrink-0 lg:w-56">
             <div className="glass-panel p-4">
               <GroupList
                 groups={groups}
                 selectedId={selectedGroupId}
                 onSelect={setSelectedGroupId}
-                onRefresh={() => setRefreshKey(k => k + 1)}
+                onRefresh={() => setRefreshKey((key) => key + 1)}
               />
             </div>
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <PromptList
               groupId={selectedGroupId}
               groups={groups}
               refreshKey={refreshKey}
-              onRefresh={() => setRefreshKey(k => k + 1)}
+              onRefresh={() => setRefreshKey((key) => key + 1)}
             />
           </div>
         </div>
