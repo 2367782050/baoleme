@@ -8,7 +8,7 @@ const BASE = "http://localhost:3000";
 const PAGES = [
   { path: "/dashboard", selector: "text=你好，admin", file: "screenshots/dashboard.png" },
   { path: "/materials", selector: "text=爆款素材", file: "screenshots/materials.png" },
-  { path: "/writing", selector: "text=智能创作", file: "screenshots/writing.png" },
+  { path: "/writing", selector: "text=文章生产管理台", file: "screenshots/writing.png" },
   { path: "/admin", selector: "text=后台运营", file: "screenshots/admin.png" },
 ] as const;
 
