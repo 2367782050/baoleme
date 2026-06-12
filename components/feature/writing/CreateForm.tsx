@@ -1,16 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatJobStatus } from "@/lib/ui/labels";
 
 type Group = { id: string; name: string };
-type Prompt = { id: string; name: string };
+type Prompt = {
+  id: string;
+  name: string;
+  sourceType?: string | null;
+  config?: unknown;
+};
 
 const IMAGE_MODES = [
   { value: "smart", label: "智能配图", imageCount: 3 },
   { value: "source_collect", label: "原文采集", imageCount: 3 },
   { value: "none", label: "不插图", imageCount: 0 },
 ] as const;
+
+const WRITING_MODES = [
+  {
+    value: "quick",
+    label: "快速成稿",
+    description: "适合先拿一版草稿，后续再人工精修。",
+  },
+  {
+    value: "material_based",
+    label: "素材成稿",
+    description: "适合已有资料、采访记录或文章链接。",
+  },
+  {
+    value: "viral_deep",
+    label: "爆文深度成稿",
+    description: "推荐。先借鉴爆文结构，再生成并做人味改写。",
+  },
+  {
+    value: "humanized",
+    label: "人味强化成稿",
+    description: "更重视具体细节、观点边界和自然表达。",
+  },
+] as const;
+
+type WritingMode = (typeof WRITING_MODES)[number]["value"];
+
+function selectedPromptUsesMaterials(prompt?: Prompt) {
+  if (!prompt) return false;
+  if (prompt.sourceType === "material_track_generated") return true;
+  const configText = JSON.stringify(prompt.config ?? {});
+  return configText.includes("material") || configText.includes("track");
+}
 
 export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
   const [form, setForm] = useState({
@@ -20,6 +57,13 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
     sourceUrl: "",
     referenceUrls: "",
     materialText: "",
+    writingMode: "viral_deep" as WritingMode,
+    targetAudience: "",
+    corePoint: "",
+    personalExperience: "",
+    forbiddenExpressions: "",
+    expectedTone: "",
+    contentDomain: "",
     imageMode: "none",
     needMaterial: true,
   });
@@ -29,6 +73,12 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
+
+  const selectedPrompt = useMemo(
+    () => prompts.find((prompt) => prompt.id === form.promptId),
+    [form.promptId, prompts],
+  );
+  const isMaterialPrompt = selectedPromptUsesMaterials(selectedPrompt);
 
   useEffect(() => {
     fetch("/api/article/groups", { credentials: "include" })
@@ -40,7 +90,7 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
     fetch("/api/prompts", { credentials: "include" })
       .then((res) => res.json())
       .then((body) => {
-        if (body.success) setPrompts(body.data);
+        if (body.success) setPrompts(body.data.items ?? body.data);
       })
       .catch(() => {});
   }, []);
@@ -61,6 +111,14 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
           .map((url) => url.trim())
           .filter(Boolean),
         materialText: form.materialText,
+        writingMode: form.writingMode,
+        targetAudience: form.targetAudience,
+        corePoint: form.corePoint,
+        personalExperience: form.personalExperience,
+        forbiddenExpressions: form.forbiddenExpressions,
+        expectedTone: form.expectedTone,
+        contentDomain: form.contentDomain,
+        promptContextSummary: selectedPrompt?.config ?? null,
         imageCount: imageMode.imageCount,
         imageStrategy: imageMode.value,
         needMaterial: Boolean(form.needMaterial),
@@ -104,19 +162,72 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
   return (
     <div>
       <h3 className="mb-1 font-semibold text-zinc-900">新建文章生产任务</h3>
-      <p className="mb-4 text-sm text-zinc-500">选择提示词，补充素材链接和图片模式，生成后的文章会进入下方列表。</p>
+      <p className="mb-4 text-sm text-zinc-500">
+        想让文章更像真人表达，请尽量提供真实案例、个人经历、观察细节或业务素材。系统会帮助提升文章质量，但不承诺任何检测结果。
+      </p>
       {error && <div className="mb-4 rounded-2xl bg-red-50/70 px-4 py-3 text-sm text-red-600 backdrop-blur">{error}</div>}
       {jobId && <div className="mb-4 rounded-2xl bg-blue-50/70 px-4 py-3 text-sm text-blue-600 backdrop-blur">任务状态：{formatJobStatus(status)}</div>}
       {!jobId && (
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-zinc-700">文章标题</label>
+            <label className="mb-2 block text-sm font-medium text-zinc-700">写作模式</label>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+              {WRITING_MODES.map((mode) => (
+                <button
+                  key={mode.value}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, writingMode: mode.value }))}
+                  className={`rounded-3xl border p-4 text-left transition ${
+                    form.writingMode === mode.value
+                      ? "border-teal-300 bg-white/80 shadow-[0_18px_45px_rgba(20,184,166,0.18)]"
+                      : "border-white/60 bg-white/45 hover:border-teal-200 hover:bg-white/70"
+                  }`}
+                >
+                  <span className="block text-sm font-semibold text-zinc-900">{mode.label}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-zinc-500">{mode.description}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-zinc-700">文章标题或选题</label>
             <input
               required
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
               className="glass-input w-full text-sm"
               placeholder="输入文章标题或选题方向"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">内容赛道</label>
+            <input
+              value={form.contentDomain}
+              onChange={(e) => setForm((f) => ({ ...f, contentDomain: e.target.value }))}
+              className="glass-input w-full text-sm"
+              placeholder="例如 财经理财 / 职场成长"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">目标读者</label>
+            <input
+              required
+              value={form.targetAudience}
+              onChange={(e) => setForm((f) => ({ ...f, targetAudience: e.target.value }))}
+              className="glass-input w-full text-sm"
+              placeholder="例如 25-35 岁职场人"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-zinc-700">核心观点</label>
+            <textarea
+              required
+              value={form.corePoint}
+              onChange={(e) => setForm((f) => ({ ...f, corePoint: e.target.value }))}
+              className="glass-input w-full text-sm"
+              rows={2}
+              placeholder="这篇文章最想表达的判断，不要只写主题。"
             />
           </div>
           <div>
@@ -140,6 +251,11 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
                 </option>
               ))}
             </select>
+            {isMaterialPrompt && (
+              <p className="mt-2 rounded-2xl bg-teal-50/70 px-3 py-2 text-xs leading-relaxed text-teal-700">
+                当前提示词来自爆文拆解，建议搭配素材正文使用，不建议照搬原文表达。
+              </p>
+            )}
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-700">主来源链接</label>
@@ -172,7 +288,35 @@ export function CreateForm({ onSuccess }: { onSuccess: () => void }) {
               onChange={(e) => setForm((f) => ({ ...f, materialText: e.target.value }))}
               className="glass-input w-full text-sm"
               rows={4}
-              placeholder="粘贴爆文片段、采访素材或选题说明。"
+              placeholder="粘贴爆文片段、采访素材、业务资料或选题说明。"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-sm font-medium text-zinc-700">真实案例 / 个人经历</label>
+            <textarea
+              value={form.personalExperience}
+              onChange={(e) => setForm((f) => ({ ...f, personalExperience: e.target.value }))}
+              className="glass-input w-full text-sm"
+              rows={3}
+              placeholder="可写真实观察、业务案例、读者故事、踩坑经历。不要编造。"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">期望语气</label>
+            <input
+              value={form.expectedTone}
+              onChange={(e) => setForm((f) => ({ ...f, expectedTone: e.target.value }))}
+              className="glass-input w-full text-sm"
+              placeholder="例如 克制、犀利、像朋友聊天"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-zinc-700">禁止表达</label>
+            <input
+              value={form.forbiddenExpressions}
+              onChange={(e) => setForm((f) => ({ ...f, forbiddenExpressions: e.target.value }))}
+              className="glass-input w-full text-sm"
+              placeholder="例如 首先其次最后、综上所述"
             />
           </div>
           <div className="flex items-center gap-2 sm:col-span-2">

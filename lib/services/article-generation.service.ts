@@ -2,7 +2,7 @@ import { prisma } from "@/lib/db";
 import type { Prisma, Article, ArticleGenerationJob } from "@/lib/generated/prisma/client";
 import { assertCanUse, consume } from "./quota.service";
 import { createConfiguredProvider } from "@/lib/adapters/ai";
-import type { AnalyzeMaterialInput, GenerateArticleInput, ReviewArticleInput, RewriteArticleInput } from "@/lib/adapters/ai";
+import type { AnalyzeMaterialInput, ArticleWritingMode, GenerateArticleInput, ReviewArticleInput, RewriteArticleInput } from "@/lib/adapters/ai/types";
 import { PromptNotFoundError } from "./prompt.service";
 import { ArticleGroupNotFoundError } from "./article.service";
 
@@ -15,6 +15,14 @@ export async function createArticleGenerationJob(
     sourceUrl?: string;
     referenceUrls?: string[];
     materialText?: string;
+    writingMode?: string;
+    targetAudience?: string;
+    corePoint?: string;
+    personalExperience?: string;
+    forbiddenExpressions?: string;
+    expectedTone?: string;
+    contentDomain?: string;
+    promptContextSummary?: unknown;
     imageCount?: number;
     imageStrategy?: string;
     needMaterial?: boolean;
@@ -24,6 +32,7 @@ export async function createArticleGenerationJob(
 
   const groupId = input.groupId?.trim() ? input.groupId : null;
   const promptId = input.promptId?.trim() ? input.promptId : null;
+  const writingMode = normalizeWritingMode(input.writingMode);
 
   if (groupId) {
     const g = await prisma.articleGroup.findUnique({ where: { id: groupId } });
@@ -41,7 +50,7 @@ export async function createArticleGenerationJob(
       promptId,
       title: input.title ?? null,
       status: "generating",
-      generationConfig: input as Prisma.InputJsonValue,
+      generationConfig: { ...input, writingMode } as Prisma.InputJsonValue,
     },
   });
 
@@ -50,11 +59,28 @@ export async function createArticleGenerationJob(
       userId,
       articleId: article.id,
       status: "pending",
-      input: input as Prisma.InputJsonValue,
+      input: { ...input, writingMode } as Prisma.InputJsonValue,
     },
   });
 
   return { article, job };
+}
+
+const ARTICLE_WRITING_MODES: ArticleWritingMode[] = ["quick", "material_based", "viral_deep", "humanized"];
+
+export class ArticleGenerationValidationError extends Error {
+  code = "VALIDATION_ERROR";
+  statusCode = 400;
+  constructor(message: string) {
+    super(message);
+    this.name = "ArticleGenerationValidationError";
+  }
+}
+
+function normalizeWritingMode(mode?: string): ArticleWritingMode {
+  if (!mode) return "quick";
+  if (ARTICLE_WRITING_MODES.includes(mode as ArticleWritingMode)) return mode as ArticleWritingMode;
+  throw new ArticleGenerationValidationError("写作模式不合法，请选择 quick、material_based、viral_deep 或 humanized");
 }
 
 export async function getArticleGenerationJob(jobId: string, userId: string): Promise<ArticleGenerationJob | null> {
@@ -111,13 +137,18 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
   try {
     const provider = await createConfiguredProvider();
     const inp = job.input as Record<string, unknown>;
+    const writingMode = normalizeWritingMode(inp.writingMode as string | undefined);
 
     // Step 1: Material analysis
     const materialAnalysis = await provider.analyzeMaterial({
-      contentDomain: "通用",
-      targetAudience: "自媒体读者",
+      contentDomain: (inp.contentDomain as string) || "通用",
+      targetAudience: (inp.targetAudience as string) || "自媒体读者",
       sourceType: "article",
-      materialText: (inp.materialText as string) ?? (inp.referenceUrls as string[])?.join("\n") ?? "",
+      materialText: [
+        inp.materialText as string,
+        inp.sourceUrl ? `主来源链接：${inp.sourceUrl as string}` : "",
+        Array.isArray(inp.referenceUrls) ? (inp.referenceUrls as string[]).join("\n") : "",
+      ].filter(Boolean).join("\n"),
     } as AnalyzeMaterialInput);
     totalTokens += materialAnalysis.usage.totalTokens;
 
@@ -135,16 +166,29 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
       materialAnalysisJson: JSON.stringify(materialAnalysis.result),
       referenceUrls: (inp.referenceUrls as string[]) ?? [],
       materialText: (inp.materialText as string) ?? "",
+      writingMode,
+      targetAudience: (inp.targetAudience as string) ?? "",
+      corePoint: (inp.corePoint as string) ?? "",
+      personalExperience: (inp.personalExperience as string) ?? "",
+      forbiddenExpressions: (inp.forbiddenExpressions as string) ?? "",
+      expectedTone: (inp.expectedTone as string) ?? "",
+      contentDomain: (inp.contentDomain as string) ?? "",
+      promptContextSummary: inp.promptContextSummary ?? null,
       wordCount: 1500,
       imageCount: (inp.imageCount as number) ?? 0,
       imageStrategy: (inp.imageStrategy as string) ?? "none",
       headingStyle: "numbered",
-      enableAIDetectionEvasion: true,
+      enableAIDetectionEvasion: false,
     } as GenerateArticleInput);
     totalTokens += genResult.usage.totalTokens;
 
     let finalMarkdown = genResult.result.markdown;
     let finalTitle = genResult.result.title;
+    let rewriteApplied = false;
+    let rewriteSummary: string[] = [];
+    const humanizationReport = genResult.result.humanizationReport
+      ? { ...genResult.result.humanizationReport, writingMode }
+      : undefined;
 
     // Step 4: Review
     const reviewResult = await provider.reviewArticle({
@@ -165,6 +209,33 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
       totalTokens += rewriteResult.usage.totalTokens;
       finalMarkdown = rewriteResult.result.markdown;
       finalTitle = rewriteResult.result.title;
+      rewriteApplied = true;
+      rewriteSummary = rewriteResult.result.changeSummary;
+    }
+
+    const resultMetadata: Record<string, unknown> = {
+      ...(job.input as Record<string, unknown>),
+      writingMode,
+      materialAnalysis: materialAnalysis.result,
+      reviewResult: reviewResult.result,
+      rewriteApplied,
+      rewriteSummary,
+      riskNotes: genResult.result.riskNotes,
+      tokenUsage: totalTokens,
+    };
+    const jobResultMetadata: Record<string, unknown> = {
+      totalTokens,
+      writingMode,
+      rewriteApplied,
+      rewriteSummary,
+    };
+    if (genResult.result.draftMarkdown !== undefined) {
+      resultMetadata.draftMarkdown = genResult.result.draftMarkdown;
+      jobResultMetadata.draftMarkdown = genResult.result.draftMarkdown;
+    }
+    if (humanizationReport !== undefined) {
+      resultMetadata.humanizationReport = humanizationReport;
+      jobResultMetadata.humanizationReport = humanizationReport;
     }
 
     await prisma.article.update({
@@ -173,10 +244,7 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
         title: finalTitle,
         markdownContent: finalMarkdown,
         status: "completed",
-        generationConfig: {
-          ...(job.input as Record<string, unknown>),
-          tokenUsage: totalTokens,
-        } as Prisma.InputJsonValue,
+        generationConfig: resultMetadata as Prisma.InputJsonValue,
       },
     });
 
@@ -185,7 +253,7 @@ export async function executeArticleGenerationJob(jobId: string): Promise<void> 
       data: {
         status: "completed",
         completedAt: new Date(),
-        tokenUsage: { totalTokens } as Prisma.InputJsonValue,
+        tokenUsage: jobResultMetadata as Prisma.InputJsonValue,
       },
     });
 

@@ -24,7 +24,9 @@ export function WritingClient() {
         <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-zinc-900">文章生产管理台</h1>
-            <p className="mt-1 text-sm text-zinc-500">用提示词、素材链接和图片模式管理文章从生成到排版、推送的生产流程。</p>
+            <p className="mt-1 text-sm text-zinc-500">
+              用爆文结构、真实素材和人味改写流程管理文章从生产到排版、推送的成稿链路。
+            </p>
           </div>
           <button onClick={() => setShowCreate(!showCreate)} className="glass-btn-primary">
             {showCreate ? "关闭新建" : "新建文章"}
@@ -51,7 +53,7 @@ export function WritingClient() {
               <p className="text-xs leading-relaxed text-zinc-500">
                 <span className="font-medium text-zinc-700">生产建议</span>
                 <br />
-                先用爆文拆解生成提示词，再把素材链接带入文章生产，能保持选题和表达风格一致。
+                先用爆文拆解生成提示词，再补充真实案例和核心观点。系统会做成稿质检，但最终内容仍建议人工审核。
               </p>
             </div>
           </aside>

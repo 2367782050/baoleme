@@ -122,13 +122,32 @@ export class MockAIProvider implements AIProvider {
     }
     await new Promise((r) => setTimeout(r, 10));
 
-    const markdown = this.buildArticleMarkdown(input);
+    const writingMode = input.writingMode ?? "quick";
+    const draftMarkdown = this.buildArticleMarkdown(input, false);
+    const markdown = this.buildArticleMarkdown(input, writingMode !== "quick");
+    const hasHumanization = writingMode !== "quick";
 
     return {
       result: {
         title: input.title || "未命名文章",
-        excerpt: `本文围绕${input.title}展开讨论，提供深度分析与实操建议。`,
+        excerpt: `本文围绕${input.title}展开讨论，结合具体素材和读者场景给出判断。`,
         markdown,
+        outline: ["读者真实处境", "核心矛盾", "可执行判断"],
+        draftMarkdown: hasHumanization ? draftMarkdown : undefined,
+        humanizationReport: hasHumanization ? {
+          writingMode,
+          strategySummary: ["从读者真实处境切入", "用一个核心矛盾组织全文"],
+          humanizationEdits: ["删掉万能开头", "打散对称段落", "补充观点边界"],
+          materialUsage: ["只使用用户提供的真实素材", "未核实信息保留人工核实提醒"],
+          originalityChecks: ["没有照抄爆款连续表达", "参考结构但重写观点和语言"],
+          riskNotes: ["涉及具体数据、人物经历或第三方观点时，发布前仍需人工核实。"],
+          aiLikeRisk: "low",
+          genericPhrases: ["已删除万能开头和机械总结"],
+          weakParagraphs: [],
+          concreteDetailsCount: 4,
+          rhythmIssues: [],
+          rewriteNotes: ["加入读者场景", "打散对称段落", "补充观点边界", "保留需人工核实的提醒"],
+        } : undefined,
         imageSlots: Array.from({ length: input.imageCount }, (_, i) => ({
           index: i + 1,
           alt: `配图${i + 1}`,
@@ -136,7 +155,7 @@ export class MockAIProvider implements AIProvider {
           searchKeywords: ["数据图表", "示意图"],
         })),
         coverPrompt: `简洁大气的封面，突出"${input.title.substring(0, 10)}"主题`,
-        riskNotes: ["部分数据建议发布前核实"],
+        riskNotes: ["涉及具体数据、人物经历或第三方观点时，发布前仍需人工核实。"],
       },
       usage: { promptTokens: 2000, completionTokens: 3000, totalTokens: 5000 },
     };
@@ -195,7 +214,7 @@ export class MockAIProvider implements AIProvider {
 
   private buildContent(input: GeneratePromptInput): string {
     const antiAI = input.enableAIDetectionEvasion
-      ? "\n【降低AI痕迹】减少模板化表达、机械连接词和过度总结，保持口语化但不随意。"
+      ? "\n【自然表达要求】减少模板化表达、机械连接词和过度总结，保持口语化但不随意。"
       : "";
 
     return `【写作身份】
@@ -241,11 +260,39 @@ export class MockAIProvider implements AIProvider {
 输出 Markdown，目标字数 ${input.wordCount} 字左右。包含标题、正文、小标题和必要的图片占位标记。`;
   }
 
-  private buildArticleMarkdown(input: GenerateArticleInput): string {
-    const antiAI = input.enableAIDetectionEvasion ? " 口语化表达，避免模板句式。" : "";
+  private buildArticleMarkdown(input: GenerateArticleInput, humanized: boolean): string {
+    if (humanized) {
+      return `# ${input.title}
+
+有些选题看上去不难，真正写起来才会发现，难点不在“怎么把道理讲完整”，而在“怎么让读者觉得这事和自己有关”。
+
+拿这个选题来说，目标读者是${input.targetAudience || "正在做内容的人"}。他们通常不缺信息，缺的是一个能帮自己判断取舍的角度。
+
+## 先把问题说窄
+
+这篇文章不打算把所有背景都讲一遍。核心观点是：${input.corePoint || "好文章不是把资料重新总结一遍，而是从资料里提炼出一个清楚判断。"}
+
+如果只写成“趋势很好、机会很多、大家要重视”，读者看完不会行动。更有效的写法，是把问题压到一个具体场景里：他今天为什么点开，读到一半为什么继续看，看完之后能改掉哪一个动作。
+
+## 素材不能只是堆进去
+
+参考素材真正有价值的地方，不是原文里的漂亮句子，而是它怎么安排冲突、怎么让读者产生代入、又在哪里给出转折。
+
+${input.personalExperience ? `你提供的真实素材里，有一个可以保留的切口：${input.personalExperience}` : "如果后续能补一个真实案例，比如一次选题失败、一次标题改动后的数据变化，文章会更有可信度。"}
+
+这里要小心一点：不确定的数据不要写死，别人的经历不要写成自己的经历。宁可少写一个“看起来很专业”的数字，也不要让文章失去可信度。
+
+## 最后落到一个判断
+
+所以这篇文章最终要解决的，不是“证明这个话题重要”，而是帮读者形成一个选择：哪些做法值得继续，哪些看似正确但其实会让内容更像模板。
+
+发布前，建议再人工补两类东西：一个真实案例，一个你自己的反对意见。前者让文章落地，后者让观点不悬浮。`;
+    }
+
+    const naturalTone = input.writingMode && input.writingMode !== "quick" ? " 表达要自然，避免机械连接词。" : "";
     return `# ${input.title}
 
-开头段落：在当今信息爆炸的时代，${input.title}的话题越来越受到关注。${antiAI}
+开头段落：围绕${input.title}，先交代读者为什么会关心这个问题。${naturalTone}
 
 ## 核心观点一
 

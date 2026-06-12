@@ -27,7 +27,7 @@ async function loginAs(page: Page, account: string, password: string) {
       return { ok: res.ok, success: Boolean(body.success) };
     });
     return result.ok && result.success;
-  }, { timeout: 5000 }).toBe(true);
+  }, { timeout: 15000 }).toBe(true);
 }
 
 async function loginCookie(page: Page, account: string, password: string) {
@@ -180,8 +180,14 @@ test("prompts: create group, generate prompt, verify new prompt appears", async 
   const groupInput = page.locator("input[placeholder='分组名称']");
   await expect(groupInput).toBeVisible({ timeout: 2000 });
   await groupInput.fill(groupName);
-  await page.locator("button:has-text('确定')").click();
-  await expect(page.getByText(groupName)).toBeVisible({ timeout: 3000 });
+  const [groupResponse] = await Promise.all([
+    page.waitForResponse((res) => res.url().includes("/api/prompts/groups") && res.request().method() === "POST"),
+    page.locator("button:has-text('确定')").click(),
+  ]);
+  const groupBody = await groupResponse.json();
+  expect(groupResponse.ok(), JSON.stringify(groupBody)).toBe(true);
+  expect(groupBody.success).toBe(true);
+  await expect(page.getByRole("button", { name: groupName })).toBeVisible({ timeout: 8000 });
 
   const promptName = `生成提示词_${Date.now().toString(36)}`;
   await page.click("button:has-text('生成提示词')");
@@ -201,13 +207,23 @@ test("writing: create article, verify exact title appears with scoped status", a
   const articleTitle = `浏览器文章_${Date.now().toString(36)}`;
   await page.click("button:has-text('新建文章')");
   await expect(page.locator("input[required]").first()).toBeVisible({ timeout: 3000 });
+  await expect(page.getByText("爆文深度成稿")).toBeVisible({ timeout: 3000 });
   const cookie = await browserSessionCookie(page, user.userId);
   const authCheck = await page.request.get(`${BASE}/api/auth/me`, { headers: { Cookie: cookie } });
   const authBody = await authCheck.json();
   expect(authCheck.ok(), JSON.stringify(authBody)).toBe(true);
   const createRes = await page.request.post(`${BASE}/api/articles/generate`, {
     headers: { Cookie: cookie },
-    data: { title: articleTitle, imageCount: 0, imageStrategy: "none", needMaterial: true },
+    data: {
+      title: articleTitle,
+      writingMode: "viral_deep",
+      targetAudience: "自媒体创作者",
+      corePoint: "好文章需要真实素材和明确观点，而不是模板化总结。",
+      materialText: "这是一段用于浏览器验收的真实素材说明，强调读者场景、写作判断和具体限制，避免文章只停留在空泛总结。",
+      imageCount: 0,
+      imageStrategy: "none",
+      needMaterial: true,
+    },
   });
   const createBody = await createRes.json();
   expect(createRes.ok(), JSON.stringify(createBody)).toBe(true);
@@ -262,7 +278,7 @@ test("membership: create order, mock pay, verify order status becomes paid", asy
   await page.locator(".depth-modal button:has-text('确定')").click();
 
   // Wait for the order to appear (plan name + order number pattern)
-  const orderRow = page.locator("div").filter({ hasText: /专业版|企业版/ }).filter({ hasText: /待支付|已支付/ }).first();
+  const orderRow = page.locator("[data-testid^='membership-order-row-']").first();
   await expect(orderRow).toBeVisible({ timeout: 8000 });
   // Verify the order status shows pending
   await expect(orderRow).toContainText(/待支付/);

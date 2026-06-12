@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { OpenAICompatibleProvider } from "../lib/adapters/ai/openai-provider.js";
+import { MockAIProvider } from "../lib/adapters/ai/mock-provider.js";
 import type { GeneratePromptResult, GenerateArticleResult } from "../lib/adapters/ai/types.js";
 
 const BASE_URL = "https://api.test.com/v1";
@@ -115,19 +116,70 @@ describe("OpenAICompatibleProvider", () => {
   });
 
   describe("generateArticle", () => {
-    it("returns parsed JSON on success", async () => {
+    it("runs strategy, draft, human rewrite, and quality stages", async () => {
+      const draftArticle: GenerateArticleResult = {
+        ...articleResult,
+        title: "初稿标题",
+        markdown: "# 初稿标题\n\n这里是第一版正文。",
+      };
+      const finalArticle: GenerateArticleResult = {
+        ...articleResult,
+        title: "终稿标题",
+        markdown: "# 终稿标题\n\n这里是改写后的正文，比初稿更像真人表达。",
+        draftMarkdown: draftArticle.markdown,
+        humanizationReport: {
+          writingMode: "viral_deep",
+          strategySummary: ["从读者痛点切入"],
+          humanizationEdits: ["删掉模板化连接词"],
+          materialUsage: ["只使用已给素材"],
+          originalityChecks: ["没有照抄爆款表达"],
+          riskNotes: ["未核实的数据需删除"],
+          aiLikeRisk: "low",
+          genericPhrases: [],
+          weakParagraphs: [],
+          concreteDetailsCount: 3,
+          rhythmIssues: [],
+          rewriteNotes: ["保留读者场景"],
+        },
+      };
       mockFetchResponse({
-        choices: [{ message: { content: JSON.stringify(articleResult) } }],
+        choices: [{ message: { content: JSON.stringify({ angle: "读者痛点", structure: ["开头", "正文", "结尾"], riskNotes: [] }) } }],
+        usage: { prompt_tokens: 10, completion_tokens: 5, total_tokens: 15 },
+      });
+      mockFetchResponse({
+        choices: [{ message: { content: JSON.stringify(draftArticle) } }],
+        usage: { prompt_tokens: 20, completion_tokens: 10, total_tokens: 30 },
+      });
+      mockFetchResponse({
+        choices: [{ message: { content: JSON.stringify({ ...finalArticle, riskNotes: ["素材真实性已标注"] }) } }],
+        usage: { prompt_tokens: 30, completion_tokens: 15, total_tokens: 45 },
+      });
+      mockFetchResponse({
+        choices: [{ message: { content: JSON.stringify(finalArticle) } }],
         usage: { prompt_tokens: 200, completion_tokens: 100, total_tokens: 300 },
       });
       const { result, usage } = await makeProvider().generateArticle({
         title: "test", promptContent: "", materialAnalysisJson: "{}",
         referenceUrls: [], materialText: "", wordCount: 500,
         imageCount: 0, imageStrategy: "none", headingStyle: "numbered",
-        enableAIDetectionEvasion: false,
+        enableAIDetectionEvasion: false, writingMode: "viral_deep",
       });
-      expect(result.title).toBe("测试文章");
-      expect(usage.totalTokens).toBe(300);
+      expect(fetch).toHaveBeenCalledTimes(4);
+      const payloadText = vi.mocked(fetch).mock.calls
+        .map(([, init]) => JSON.stringify(JSON.parse((init as RequestInit).body as string).messages))
+        .join("\n");
+      expect(payloadText).toContain("策略");
+      expect(payloadText).toContain("初稿");
+      expect(payloadText).toContain("人味改写");
+      expect(payloadText).toContain("质检");
+      expect(payloadText).toContain("不要伪造经历或数据");
+      expect(payloadText).toContain("不要照抄爆款");
+      expect(payloadText).not.toContain("绕过检测");
+      expect(result.title).toBe("终稿标题");
+      expect(result.draftMarkdown).toBe(draftArticle.markdown);
+      expect(result.markdown).not.toBe(result.draftMarkdown);
+      expect(result.humanizationReport?.writingMode).toBe("viral_deep");
+      expect(usage.totalTokens).toBe(390);
     });
 
     it("throws Chinese error on HTTP 500", async () => {
@@ -149,6 +201,41 @@ describe("OpenAICompatibleProvider", () => {
       })).rejects.toThrow("AI 服务暂时不可用");
     });
   });
+});
+
+describe("MockAIProvider article modes", () => {
+  it("keeps quick mode compatible with the old result shape", async () => {
+    const provider = new MockAIProvider();
+    const { result } = await provider.generateArticle({
+      title: "快速文章", promptContent: "", materialAnalysisJson: "{}",
+      referenceUrls: [], materialText: "", wordCount: 500,
+      imageCount: 0, imageStrategy: "none", headingStyle: "numbered",
+      enableAIDetectionEvasion: false,
+    });
+
+    expect(result.markdown).toContain("# 快速文章");
+    expect(result.draftMarkdown).toBeUndefined();
+    expect(result.humanizationReport).toBeUndefined();
+  });
+
+  it.each(["material_based", "viral_deep", "humanized"] as const)(
+    "returns draft and report for %s mode",
+    async (writingMode) => {
+      const provider = new MockAIProvider();
+      const { result } = await provider.generateArticle({
+        title: "深度文章", promptContent: "", materialAnalysisJson: "{}",
+        referenceUrls: [], materialText: "用户给出的真实素材", wordCount: 1200,
+        imageCount: 0, imageStrategy: "none", headingStyle: "numbered",
+        enableAIDetectionEvasion: false, writingMode,
+      });
+
+      expect(result.draftMarkdown).toContain("# 深度文章");
+      expect(result.markdown).toContain("# 深度文章");
+      expect(result.markdown).not.toBe(result.draftMarkdown);
+      expect(result.humanizationReport?.writingMode).toBe(writingMode);
+      expect(result.humanizationReport?.riskNotes.join("")).toContain("核实");
+    },
+  );
 });
 
 describe("createConfiguredProvider", () => {
@@ -178,5 +265,23 @@ describe("createConfiguredProvider", () => {
     const p = await createConfiguredProvider();
     expect(p).toBeTruthy();
     vi.unstubAllEnvs();
+  });
+
+  it("defaults to mock and does not call real AI for article generation", async () => {
+    vi.stubEnv("AI_PROVIDER", "");
+    vi.stubEnv("AI_API_KEY", "");
+    vi.stubGlobal("fetch", vi.fn());
+    const { createConfiguredProvider } = await import("../lib/adapters/ai/openai-provider.js");
+    const p = await createConfiguredProvider();
+    const { result } = await p.generateArticle({
+      title: "默认 Mock", promptContent: "", materialAnalysisJson: "{}",
+      referenceUrls: [], materialText: "", wordCount: 500,
+      imageCount: 0, imageStrategy: "none", headingStyle: "numbered",
+      enableAIDetectionEvasion: false,
+    });
+    expect(result.markdown).toContain("# 默认 Mock");
+    expect(fetch).not.toHaveBeenCalled();
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
   });
 });

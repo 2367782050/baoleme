@@ -6,6 +6,8 @@ import type {
   AnalyzeMaterialResult,
   GenerateArticleInput,
   GenerateArticleResult,
+  ArticleWritingMode,
+  HumanizationReport,
   ReviewArticleInput,
   ReviewArticleResult,
   RewriteArticleInput,
@@ -56,7 +58,82 @@ export class OpenAICompatibleProvider implements AIProvider {
   }
 
   async generateArticle(input: GenerateArticleInput): Promise<{ result: GenerateArticleResult; usage: TokenUsage }> {
-    return this.chatJson<GenerateArticleResult>(input, "generateArticle");
+    const writingMode = input.writingMode ?? "quick";
+    const stageInput = { ...input, writingMode };
+    if (writingMode === "quick") {
+      return this.chatJson<GenerateArticleResult>(stageInput, "generateArticle");
+    }
+
+    const strategy = await this.chatJson<{
+      titleAngle: string;
+      openingHook: string;
+      outline: string[];
+      emotionPath: string[];
+      materialUsage: string[];
+      doNotCopy: string[];
+      humanToneRules: string[];
+    }>(stageInput, "buildArticleStrategy");
+
+    const draft = await this.chatJson<GenerateArticleResult>({
+      ...stageInput,
+      strategy: strategy.result,
+    }, "generateArticleDraft");
+
+    const humanized = await this.chatJson<GenerateArticleResult>({
+      ...stageInput,
+      strategy: strategy.result,
+      draftMarkdown: draft.result.markdown,
+    }, "humanizeArticleDraft");
+
+    const quality = await this.chatJson<GenerateArticleResult>({
+      ...stageInput,
+      strategy: strategy.result,
+      draftMarkdown: draft.result.markdown,
+      humanizedMarkdown: humanized.result.markdown,
+    }, "reviewHumanization");
+
+    const humanizationReport = quality.result.humanizationReport
+      ?? humanized.result.humanizationReport
+      ?? this.buildFallbackHumanizationReport(writingMode, strategy.result.outline, quality.result.riskNotes);
+
+    return {
+      result: {
+        ...quality.result,
+        outline: quality.result.outline ?? humanized.result.outline ?? strategy.result.outline,
+        draftMarkdown: draft.result.markdown,
+        humanizationReport,
+        riskNotes: [
+          ...(quality.result.riskNotes ?? humanized.result.riskNotes ?? []),
+          "涉及真实数据、个人经历、第三方观点时，发布前仍需人工核实。",
+        ],
+      },
+      usage: {
+        promptTokens: strategy.usage.promptTokens + draft.usage.promptTokens + humanized.usage.promptTokens + quality.usage.promptTokens,
+        completionTokens: strategy.usage.completionTokens + draft.usage.completionTokens + humanized.usage.completionTokens + quality.usage.completionTokens,
+        totalTokens: strategy.usage.totalTokens + draft.usage.totalTokens + humanized.usage.totalTokens + quality.usage.totalTokens,
+      },
+    };
+  }
+
+  private buildFallbackHumanizationReport(
+    writingMode: ArticleWritingMode,
+    outline: string[] = [],
+    riskNotes: string[] = [],
+  ): HumanizationReport {
+    return {
+      writingMode,
+      strategySummary: outline.length > 0 ? outline : ["已完成策略、初稿、人味改写和质检"],
+      humanizationEdits: ["压缩模板化表达", "补充读者场景", "保留事实边界"],
+      materialUsage: ["仅使用用户提供素材和素材分析结果"],
+      originalityChecks: ["不照抄爆款连续表达", "不把他人经历写成自己的经历"],
+      riskNotes,
+      aiLikeRisk: "medium",
+      genericPhrases: [],
+      weakParagraphs: [],
+      concreteDetailsCount: 0,
+      rhythmIssues: [],
+      rewriteNotes: [],
+    };
   }
 
   async reviewArticle(input: ReviewArticleInput): Promise<{ result: ReviewArticleResult; usage: TokenUsage }> {
@@ -73,6 +150,10 @@ export class OpenAICompatibleProvider implements AIProvider {
     const typeLabels: Record<string, string> = {
       analyzeMaterial: "分析素材并提取可用的选题角度和结构建议",
       generateArticle: "生成一篇完整的公众号文章（title, excerpt, markdown 三字段都必须有中文内容）",
+      buildArticleStrategy: "根据选题、素材和赛道提示词生成写作策略，不写正文",
+      generateArticleDraft: "根据写作策略生成初稿，必须有具体读者场景和观点边界",
+      humanizeArticleDraft: "在不伪造经历和数据的前提下，对初稿做人味改写，删除空话和模板句",
+      reviewHumanization: "质检终稿，检查自然度、素材真实性、原创性和事实风险，输出完整文章以及 humanizationReport",
       reviewArticle: "审核文章质量并给出评分和改进建议",
       rewriteArticle: "根据审核意见重写文章",
     };
@@ -83,7 +164,7 @@ export class OpenAICompatibleProvider implements AIProvider {
         body: JSON.stringify({
           model: this.model,
           messages: [
-            { role: "system", content: `你是专业的中文自媒体内容创作者。任务：${typeLabels[type] ?? type}。请输出合法 JSON，所有文本字段必须使用中文。直接输出纯 JSON 对象，开头就是 {，不要加任何解释或 Markdown 代码块。` },
+            { role: "system", content: `你是专业的中文自媒体内容编辑。任务：${typeLabels[type] ?? type}。请输出合法 JSON，所有文本字段必须使用中文。直接输出纯 JSON 对象，开头就是 {，不要加任何解释或 Markdown 代码块。重要边界：不要承诺通过任何 AI 检测；不要伪造经历或数据、引用、机构或链接；不要照抄爆款或连续表达；参考素材只借鉴结构和选题；不确定事实必须写成需要人工核实。` },
             { role: "user", content: `任务类型：${type}\n输入数据：${JSON.stringify(input)}` },
           ],
           temperature: 0.7,
@@ -146,7 +227,7 @@ export class OpenAICompatibleProvider implements AIProvider {
 - 性格特征：${input.personalityTraits.join("、")}
 - 标题结构：${input.headingStyle}
 - 目标字数：${input.wordCount}
-- 是否减少模板化 AI 腔：${input.enableAIDetectionEvasion}
+- 是否减少模板化表达：${input.enableAIDetectionEvasion}
 
 素材分析：
 ${input.materialAnalysisJson}

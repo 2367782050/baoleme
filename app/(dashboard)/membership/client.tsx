@@ -81,7 +81,7 @@ export function MembershipClient({ current, plans, quota }: { current: { members
           {orders.length === 0 ? <p className="text-sm text-zinc-400">暂无订单</p> : (
             <div className="space-y-2">
               {orders.map(o => (
-                <div key={o.id} className="flex items-center justify-between py-3 glass-divider last:border-0">
+                <div key={o.id} data-testid={`membership-order-row-${o.id}`} className="flex items-center justify-between py-3 glass-divider last:border-0">
                   <div>
                     <p className="text-sm font-medium text-zinc-700">{o.plan.name} · {o.orderNo}</p>
                     <p className="text-xs text-zinc-400 mt-0.5">¥{(o.amountCents / 100).toFixed(2)} · <span className={o.status === "paid" ? "badge-ok" : "badge-warn"}>{formatOrderStatus(o.status)}</span> · {new Date(o.createdAt).toLocaleDateString()}</p>

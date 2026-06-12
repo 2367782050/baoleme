@@ -178,7 +178,7 @@ export function GenerateForm({ groups, onSuccess }: { groups: Group[]; onSuccess
               className="rounded"
             />
             <label htmlFor="antiAI" className="text-sm text-zinc-600">
-              降低 AI 痕迹
+              减少模板化表达，提升自然度
             </label>
           </div>
           <div className="sm:col-span-2">

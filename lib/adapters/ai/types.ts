@@ -57,6 +57,14 @@ export type GenerateArticleInput = {
   materialAnalysisJson: string;
   referenceUrls: string[];
   materialText: string;
+  writingMode?: ArticleWritingMode;
+  targetAudience?: string;
+  corePoint?: string;
+  personalExperience?: string;
+  forbiddenExpressions?: string;
+  expectedTone?: string;
+  contentDomain?: string;
+  promptContextSummary?: unknown;
   wordCount: number;
   imageCount: number;
   imageStrategy: string;
@@ -64,10 +72,30 @@ export type GenerateArticleInput = {
   enableAIDetectionEvasion: boolean;
 };
 
+export type ArticleWritingMode = "quick" | "material_based" | "viral_deep" | "humanized";
+
+export type HumanizationReport = {
+  writingMode?: ArticleWritingMode;
+  strategySummary?: string[];
+  humanizationEdits?: string[];
+  materialUsage?: string[];
+  originalityChecks?: string[];
+  riskNotes: string[];
+  aiLikeRisk?: "low" | "medium" | "high";
+  genericPhrases?: string[];
+  weakParagraphs?: string[];
+  concreteDetailsCount?: number;
+  rhythmIssues?: string[];
+  rewriteNotes?: string[];
+};
+
 export type GenerateArticleResult = {
   title: string;
   excerpt: string;
   markdown: string;
+  outline?: string[];
+  draftMarkdown?: string;
+  humanizationReport?: HumanizationReport;
   imageSlots: { index: number; alt: string; placementHint: string; searchKeywords: string[] }[];
   coverPrompt: string;
   riskNotes: string[];

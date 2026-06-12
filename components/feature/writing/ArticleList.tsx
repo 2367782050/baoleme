@@ -11,7 +11,17 @@ type Article = {
   pushStatus: string;
   group: { name: string } | null;
   prompt: { name: string } | null;
+  generationConfig?: unknown;
   updatedAt: string;
+};
+
+type HumanizationReport = {
+  aiLikeRisk?: "low" | "medium" | "high";
+  genericPhrases?: string[];
+  weakParagraphs?: string[];
+  concreteDetailsCount?: number;
+  rhythmIssues?: string[];
+  rewriteNotes?: string[];
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -35,6 +45,28 @@ function statusClass(status: string) {
   if (status === "failed") return "badge-err";
   if (status === "generating" || status === "pending") return "badge-info motion-generating";
   return "badge-muted";
+}
+
+function riskLabel(risk?: string) {
+  if (risk === "low") return "低";
+  if (risk === "medium") return "中";
+  if (risk === "high") return "高";
+  return "未评估";
+}
+
+function riskClass(risk?: string) {
+  if (risk === "low") return "badge-ok";
+  if (risk === "medium") return "badge-warn";
+  if (risk === "high") return "badge-err";
+  return "badge-muted";
+}
+
+function getHumanizationReport(article: Article): HumanizationReport | null {
+  const config = article.generationConfig;
+  if (!config || typeof config !== "object") return null;
+  const report = (config as { humanizationReport?: HumanizationReport }).humanizationReport;
+  if (!report || typeof report !== "object") return null;
+  return report;
 }
 
 export function ArticleList({
@@ -173,43 +205,87 @@ export function ArticleList({
 
       {!loading && !error && articles.length > 0 && (
         <div className="divide-y divide-black/5">
-          {articles.map((article) => (
-            <div key={article.id} data-testid={`article-row-${article.id}`} className="grid grid-cols-1 gap-3 p-4 lg:grid-cols-[1fr_8rem_7rem_8rem_12rem] lg:items-center">
-              <div className="min-w-0">
-                <h3 className="truncate font-medium text-zinc-900">{article.title || "未命名文章"}</h3>
-                <p className="mt-0.5 text-xs text-zinc-400">
-                  {article.group?.name ?? "未分组"} · {article.prompt?.name ?? "无提示词"}
-                </p>
+          {articles.map((article) => {
+            const report = getHumanizationReport(article);
+            return (
+              <div key={article.id} data-testid={`article-row-${article.id}`} className="p-4">
+                <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_8rem_7rem_8rem_12rem] lg:items-center">
+                  <div className="min-w-0">
+                    <h3 className="truncate font-medium text-zinc-900">{article.title || "未命名文章"}</h3>
+                    <p className="mt-0.5 text-xs text-zinc-400">
+                      {article.group?.name ?? "未分组"} · {article.prompt?.name ?? "无提示词"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[11px] text-zinc-400 lg:hidden">生成状态</p>
+                    <span data-testid={`article-status-${article.id}`} className={statusClass(article.status)}>
+                      {STATUS_LABELS[article.status] ?? "未知状态"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[11px] text-zinc-400 lg:hidden">推送状态</p>
+                    <span className={article.pushStatus === "pushed" ? "badge-ok" : article.pushStatus === "failed" ? "badge-err" : "badge-muted"}>
+                      {PUSH_STATUS_LABELS[article.pushStatus] ?? "未推送"}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[11px] text-zinc-400 lg:hidden">更新时间</p>
+                    <span className="text-xs text-zinc-500">{new Date(article.updatedAt).toLocaleString()}</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-3 text-xs">
+                    <Link href={`/formatter?articleId=${article.id}`} className="text-teal-600 hover:underline">
+                      排版
+                    </Link>
+                    <button type="button" onClick={() => setNotice("公众号推送接口预留，暂未配置。")} className="text-zinc-500 hover:text-zinc-700">
+                      推送
+                    </button>
+                    <button onClick={() => handleDelete(article.id)} className="text-red-400 hover:text-red-600">
+                      删除
+                    </button>
+                  </div>
+                </div>
+
+                {report && (
+                  <details className="mt-4 rounded-3xl border border-white/60 bg-white/45 p-4 text-sm text-zinc-600">
+                    <summary className="cursor-pointer font-semibold text-zinc-900">成稿质检</summary>
+                    <div className="mt-3 grid gap-3 md:grid-cols-3">
+                      <div>
+                        <p className="text-xs text-zinc-400">AI 腔风险</p>
+                        <span className={riskClass(report.aiLikeRisk)}>{riskLabel(report.aiLikeRisk)}</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-zinc-400">具体细节数量</p>
+                        <p className="mt-1 font-semibold text-zinc-900">{report.concreteDetailsCount ?? 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-zinc-400">提醒</p>
+                        <p className="mt-1 text-xs leading-relaxed text-zinc-500">系统只做质量评估，最终内容仍建议人工审核。</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <p className="mb-1 text-xs font-medium text-zinc-500">已优化点</p>
+                        <ul className="space-y-1 text-xs leading-relaxed text-zinc-500">
+                          {(report.rewriteNotes?.length ? report.rewriteNotes : ["已检查空话、段落节奏和素材使用。"]).slice(0, 4).map((item) => (
+                            <li key={item}>· {item}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-xs font-medium text-zinc-500">仍建议补充</p>
+                        <ul className="space-y-1 text-xs leading-relaxed text-zinc-500">
+                          {[...(report.weakParagraphs ?? []), ...(report.rhythmIssues ?? [])].slice(0, 4).map((item) => (
+                            <li key={item}>· {item}</li>
+                          ))}
+                          {!(report.weakParagraphs?.length || report.rhythmIssues?.length) && <li>· 可继续补充真实案例、数据或个人观察。</li>}
+                        </ul>
+                      </div>
+                    </div>
+                  </details>
+                )}
               </div>
-              <div>
-                <p className="mb-1 text-[11px] text-zinc-400 lg:hidden">生成状态</p>
-                <span data-testid={`article-status-${article.id}`} className={statusClass(article.status)}>
-                  {STATUS_LABELS[article.status] ?? "未知状态"}
-                </span>
-              </div>
-              <div>
-                <p className="mb-1 text-[11px] text-zinc-400 lg:hidden">推送状态</p>
-                <span className={article.pushStatus === "pushed" ? "badge-ok" : article.pushStatus === "failed" ? "badge-err" : "badge-muted"}>
-                  {PUSH_STATUS_LABELS[article.pushStatus] ?? "未推送"}
-                </span>
-              </div>
-              <div>
-                <p className="mb-1 text-[11px] text-zinc-400 lg:hidden">更新时间</p>
-                <span className="text-xs text-zinc-500">{new Date(article.updatedAt).toLocaleString()}</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                <Link href={`/formatter?articleId=${article.id}`} className="text-teal-600 hover:underline">
-                  排版
-                </Link>
-                <button type="button" onClick={() => setNotice("公众号推送接口预留，暂未配置。")} className="text-zinc-500 hover:text-zinc-700">
-                  推送
-                </button>
-                <button onClick={() => handleDelete(article.id)} className="text-red-400 hover:text-red-600">
-                  删除
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
-import { createArticleGenerationJob } from "@/lib/services/article-generation.service";
+import { createArticleGenerationJob, ArticleGenerationValidationError } from "@/lib/services/article-generation.service";
 import { QuotaExceededError } from "@/lib/services/quota.service";
 import { PromptNotFoundError } from "@/lib/services/prompt.service";
 import { ArticleGroupNotFoundError } from "@/lib/services/article.service";
@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     if (e instanceof QuotaExceededError) return quotaExceeded(e.message);
     if (e instanceof PromptNotFoundError || e instanceof ArticleGroupNotFoundError) return err("NOT_FOUND", e.message, undefined, 404);
+    if (e instanceof ArticleGenerationValidationError) return err("VALIDATION_ERROR", e.message, undefined, 400);
     return ua(e) ?? err("INTERNAL_ERROR", "服务器内部错误", undefined, 500);
   }
 }

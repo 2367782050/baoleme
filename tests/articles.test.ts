@@ -11,6 +11,7 @@ import {
 import {
   createArticleGenerationJob, getArticleGenerationJob,
   executeArticleGenerationJob, retryArticleGenerationJob,
+  ArticleGenerationValidationError,
 } from "../lib/services/article-generation.service.js";
 import { mockAIProvider } from "../lib/adapters/ai/mock-provider.js";
 import { QuotaExceededError } from "../lib/services/quota.service.js";
@@ -81,6 +82,18 @@ describe("Article generation service", () => {
 
   it("creates job with articleId + jobId + pending", async () => { const { article, job } = await createArticleGenerationJob(userId, { title: "AI的未来", promptId }); expect(article.id).toBeTruthy(); expect(job.id).toBeTruthy(); expect(job.status).toBe("pending"); expect(article.status).toBe("generating"); });
 
+  it("rejects invalid writingMode with validation error", async () => {
+    await resetDailyQuota(userId);
+    const jobsBefore = await prisma.articleGenerationJob.count({ where: { userId } });
+    const articlesBefore = await prisma.article.count({ where: { userId } });
+    const invalidInput = { title: "坏模式", writingMode: "robot_writer" } as unknown as Parameters<typeof createArticleGenerationJob>[1];
+
+    await expect(createArticleGenerationJob(userId, invalidInput)).rejects.toThrow(ArticleGenerationValidationError);
+    await expect(createArticleGenerationJob(userId, invalidInput)).rejects.toThrow("写作模式不合法");
+    expect(await prisma.articleGenerationJob.count({ where: { userId } })).toBe(jobsBefore);
+    expect(await prisma.article.count({ where: { userId } })).toBe(articlesBefore);
+  });
+
   it("executes → completed with markdown", async () => { await resetDailyQuota(userId); const { article, job } = await createArticleGenerationJob(userId, { title: "测试文章生成", promptId }); await prisma.articleGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
     await executeArticleGenerationJob(job.id); const j = await getArticleGenerationJob(job.id, userId); expect(j!.status).toBe("completed"); const a = await prisma.article.findUnique({ where: { id: article.id } }); expect(a!.status).toBe("completed"); expect(a!.markdownContent).toContain("#"); });
 
@@ -89,6 +102,28 @@ describe("Article generation service", () => {
 
   it("mock review forces rewrite", async () => { mockAIProvider.setForceRewrite(true); await resetDailyQuota(userId); const { article, job } = await createArticleGenerationJob(userId, { title: "需要重写", promptId }); await prisma.articleGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
     await executeArticleGenerationJob(job.id); const a = await prisma.article.findUnique({ where: { id: article.id } }); expect(a!.markdownContent).toContain("【精修】"); });
+
+  it("preserves deep writing metadata on article and job result JSON", async () => {
+    await resetDailyQuota(userId);
+    const { article, job } = await createArticleGenerationJob(userId, { title: "深度成稿", promptId, writingMode: "viral_deep", materialText: "真实素材片段" });
+    await prisma.articleGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
+
+    await executeArticleGenerationJob(job.id);
+
+    const a = await prisma.article.findUnique({ where: { id: article.id } });
+    const completedJob = await getArticleGenerationJob(job.id, userId);
+    const generationConfig = a!.generationConfig as Record<string, unknown>;
+    const jobResult = completedJob!.tokenUsage as Record<string, unknown>;
+    const report = generationConfig.humanizationReport as Record<string, unknown>;
+
+    expect(generationConfig.writingMode).toBe("viral_deep");
+    expect(typeof generationConfig.draftMarkdown).toBe("string");
+    expect(a!.markdownContent).not.toBe(generationConfig.draftMarkdown);
+    expect(report.writingMode).toBe("viral_deep");
+    expect(jobResult.writingMode).toBe("viral_deep");
+    expect(jobResult.draftMarkdown).toBe(generationConfig.draftMarkdown);
+    expect(jobResult.humanizationReport).toEqual(generationConfig.humanizationReport);
+  });
 
   it("mock failure → failed with errorMessage", async () => { mockAIProvider.setFailNext(true); await resetDailyQuota(userId); const { article, job } = await createArticleGenerationJob(userId, { title: "会失败", promptId }); try { await prisma.articleGenerationJob.update({ where: { id: job.id }, data: { status: "running", startedAt: new Date(), attempts: { increment: 1 } } });
     await executeArticleGenerationJob(job.id); } catch {} const j = await getArticleGenerationJob(job.id, userId); expect(j!.status).toBe("failed"); expect(j!.errorMessage).toContain("Mock AI failure"); const a = await prisma.article.findUnique({ where: { id: article.id } }); expect(a!.status).toBe("failed"); });
